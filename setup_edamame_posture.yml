@@ -180,4 +180,11 @@
 
   variables:
     AUTO_REMEDIATE: "false"
+    SKIP_REMEDIATIONS: "false"
+    NETWORK_SCAN: "false"
+    DUMP_SESSIONS_LOG: "false"
+    CHECKOUT: "false"
+    CHECKOUT_SUBMODULES: "false"
     DISPLAY_LOGS: "true"
+    WHITELIST: "github"
+    WHITELIST_CONFORMANCE: "false"
