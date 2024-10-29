@@ -55,7 +55,7 @@
       fi
 
     - |
-      echo "Auto-remediating posture issues if requested..."
+      echo "Auto-remediating posture issues if requested...."
       echo "auto remediate: $AUTO_REMEDIATE"
       echo "skip remediation: $SKIP_REMEDIATIONS"
       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
