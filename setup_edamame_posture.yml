@@ -29,7 +29,7 @@
             chmod +x edamame_posture
           fi
           ;;
-        "darwin")
+        "macos")
           if [[ ! -f edamame_posture ]]; then
             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
             chmod +x edamame_posture
