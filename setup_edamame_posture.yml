@@ -199,327 +199,327 @@
         fi
       fi
 
-.setup_edamame_posture_powershell:
-  stage: setup
-  tags:
-    - windows
-  script:
-    - |
-      # PowerShell Script Begins
+  # .setup_edamame_posture_powershell:
+  #   stage: setup
+  #   tags:
+  #     - windows
+  #   script:
+  #     - |
+  #       # PowerShell Script Begins
 
-      Write-Host "=============================="
-      Write-Host "Determining the Runner's OS based on tags..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Determining the Runner's OS based on tags..."
+  #       Write-Host "=============================="
 
-      # Determine Runner OS
-      if ($env:CI_RUNNER_TAGS -match "windows") {
-          $env:CI_RUNNER_OS = "windows"
-      }
-      else {
-          Write-Host "Unable to determine Runner's OS from tags."
-          $env:CI_RUNNER_OS = "unknown"
-      }
-      Write-Host "Detected Runner OS: $env:CI_RUNNER_OS"
+  #       # Determine Runner OS
+  #       if ($env:CI_RUNNER_TAGS -match "windows") {
+  #           $env:CI_RUNNER_OS = "windows"
+  #       }
+  #       else {
+  #           Write-Host "Unable to determine Runner's OS from tags."
+  #           $env:CI_RUNNER_OS = "unknown"
+  #       }
+  #       Write-Host "Detected Runner OS: $env:CI_RUNNER_OS"
 
-      # Exit if OS is unknown
-      if ($env:CI_RUNNER_OS -eq "unknown") {
-          Write-Error "Unsupported OS: $env:CI_RUNNER_OS. Exiting..."
-          exit 1
-      }
+  #       # Exit if OS is unknown
+  #       if ($env:CI_RUNNER_OS -eq "unknown") {
+  #           Write-Error "Unsupported OS: $env:CI_RUNNER_OS. Exiting..."
+  #           exit 1
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Ensuring Chocolatey is installed..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Ensuring Chocolatey is installed..."
+  #       Write-Host "=============================="
 
-      # Check if Chocolatey is installed
-      if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-          Write-Host "Chocolatey not found. Installing Chocolatey..."
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-              Write-Error "Chocolatey installation failed. Exiting..."
-              exit 1
-          }
-          Write-Host "Chocolatey installed successfully."
-      }
-      else {
-          Write-Host "Chocolatey is already installed."
-      }
+  #       # Check if Chocolatey is installed
+  #       if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+  #           Write-Host "Chocolatey not found. Installing Chocolatey..."
+  #           Set-ExecutionPolicy Bypass -Scope Process -Force
+  #           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+  #           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+  #           if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+  #               Write-Error "Chocolatey installation failed. Exiting..."
+  #               exit 1
+  #           }
+  #           Write-Host "Chocolatey installed successfully."
+  #       }
+  #       else {
+  #           Write-Host "Chocolatey is already installed."
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Installing wget and curl via Chocolatey if not already installed..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Installing wget and curl via Chocolatey if not already installed..."
+  #       Write-Host "=============================="
 
-      # Install wget if not installed
-      if (-not (choco list --local-only | Select-String '^wget$')) {
-          Write-Host "Installing wget..."
-          choco install wget -y
-          if (-not (Get-Command wget -ErrorAction SilentlyContinue)) {
-              Write-Error "wget installation failed. Exiting..."
-              exit 1
-          }
-          Write-Host "wget installed successfully."
-      }
-      else {
-          Write-Host "wget is already installed."
-      }
+  #       # Install wget if not installed
+  #       if (-not (choco list --local-only | Select-String '^wget$')) {
+  #           Write-Host "Installing wget..."
+  #           choco install wget -y
+  #           if (-not (Get-Command wget -ErrorAction SilentlyContinue)) {
+  #               Write-Error "wget installation failed. Exiting..."
+  #               exit 1
+  #           }
+  #           Write-Host "wget installed successfully."
+  #       }
+  #       else {
+  #           Write-Host "wget is already installed."
+  #       }
 
-      # Install curl if not installed
-      if (-not (choco list --local-only | Select-String '^curl$')) {
-          Write-Host "Installing curl..."
-          choco install curl -y
-          if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
-              Write-Error "curl installation failed. Exiting..."
-              exit 1
-          }
-          Write-Host "curl installed successfully."
-      }
-      else {
-          Write-Host "curl is already installed."
-      }
+  #       # Install curl if not installed
+  #       if (-not (choco list --local-only | Select-String '^curl$')) {
+  #           Write-Host "Installing curl..."
+  #           choco install curl -y
+  #           if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
+  #               Write-Error "curl installation failed. Exiting..."
+  #               exit 1
+  #           }
+  #           Write-Host "curl installed successfully."
+  #       }
+  #       else {
+  #           Write-Host "curl is already installed."
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Setting up environment for Windows..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Setting up environment for Windows..."
+  #       Write-Host "=============================="
 
-      # Create a bin directory if it doesn't exist
-      $binPath = "$env:USERPROFILE\bin"
-      if (-not (Test-Path -Path $binPath)) {
-          Write-Host "Creating bin directory at $binPath"
-          New-Item -ItemType Directory -Path $binPath | Out-Null
-      }
-      else {
-          Write-Host "bin directory already exists at $binPath"
-      }
+  #       # Create a bin directory if it doesn't exist
+  #       $binPath = "$env:USERPROFILE\bin"
+  #       if (-not (Test-Path -Path $binPath)) {
+  #           Write-Host "Creating bin directory at $binPath"
+  #           New-Item -ItemType Directory -Path $binPath | Out-Null
+  #       }
+  #       else {
+  #           Write-Host "bin directory already exists at $binPath"
+  #       }
 
-      # Add bin directory to PATH if not already present
-      if (-not ($env:PATH -like "*$binPath*")) {
-          Write-Host "Adding $binPath to PATH"
-          [System.Environment]::SetEnvironmentVariable("PATH", "$binPath;$env:PATH", [System.EnvironmentVariableTarget]::User)
-          $env:PATH = "$binPath;$env:PATH"
-          Write-Host "PATH updated successfully."
-      }
-      else {
-          Write-Host "PATH already includes $binPath"
-      }
+  #       # Add bin directory to PATH if not already present
+  #       if (-not ($env:PATH -like "*$binPath*")) {
+  #           Write-Host "Adding $binPath to PATH"
+  #           [System.Environment]::SetEnvironmentVariable("PATH", "$binPath;$env:PATH", [System.EnvironmentVariableTarget]::User)
+  #           $env:PATH = "$binPath;$env:PATH"
+  #           Write-Host "PATH updated successfully."
+  #       }
+  #       else {
+  #           Write-Host "PATH already includes $binPath"
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Downloading EDAMAME Posture binary for Windows..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Downloading EDAMAME Posture binary for Windows..."
+  #       Write-Host "=============================="
 
-      # Define the binary name and download URL
-      $edamameExe = "edamame_posture.exe"
-      $edamameUrl = "https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe"
+  #       # Define the binary name and download URL
+  #       $edamameExe = "edamame_posture.exe"
+  #       $edamameUrl = "https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe"
 
-      # Download the binary if it doesn't exist
-      if (-not (Test-Path -Path $edamameExe)) {
-          Write-Host "Downloading $edamameExe from $edamameUrl..."
-          try {
-              Invoke-WebRequest -Uri $edamameUrl -OutFile $edamameExe -UseBasicParsing
-              Write-Host "$edamameExe downloaded successfully."
-          }
-          catch {
-              Write-Error "Failed to download $edamameExe. Exiting..."
-              exit 1
-          }
-      }
-      else {
-          Write-Host "$edamameExe already exists."
-      }
+  #       # Download the binary if it doesn't exist
+  #       if (-not (Test-Path -Path $edamameExe)) {
+  #           Write-Host "Downloading $edamameExe from $edamameUrl..."
+  #           try {
+  #               Invoke-WebRequest -Uri $edamameUrl -OutFile $edamameExe -UseBasicParsing
+  #               Write-Host "$edamameExe downloaded successfully."
+  #           }
+  #           catch {
+  #               Write-Error "Failed to download $edamameExe. Exiting..."
+  #               exit 1
+  #           }
+  #       }
+  #       else {
+  #           Write-Host "$edamameExe already exists."
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Showing initial posture..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Showing initial posture..."
+  #       Write-Host "=============================="
 
-      # Run the initial posture score
-      try {
-          .\$edamameExe score
-          Write-Host "Initial posture score completed successfully."
-      }
-      catch {
-          Write-Error "Failed to execute posture score. Exiting..."
-          exit 1
-      }
+  #       # Run the initial posture score
+  #       try {
+  #           .\$edamameExe score
+  #           Write-Host "Initial posture score completed successfully."
+  #       }
+  #       catch {
+  #           Write-Error "Failed to execute posture score. Exiting..."
+  #           exit 1
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Auto-remediating posture issues if requested..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Auto-remediating posture issues if requested..."
+  #       Write-Host "=============================="
 
-      # Auto-remediation
-      if ($env:AUTO_REMEDIATE -eq "true") {
-          if ($env:SKIP_REMEDIATIONS -eq "false") {
-              Write-Host "No remediations to skip."
-              try {
-                  .\$edamameExe remediate
-                  Write-Host "Auto-remediation completed successfully."
-              }
-              catch {
-                  Write-Error "Auto-remediation failed. Exiting..."
-                  exit 1
-              }
-          }
-          else {
-              Write-Host "Skipping remediations: $env:SKIP_REMEDIATIONS"
-              try {
-                  .\$edamameExe remediate "$env:SKIP_REMEDIATIONS"
-                  Write-Host "Selective auto-remediation completed successfully."
-              }
-              catch {
-                  Write-Error "Selective auto-remediation failed. Exiting..."
-                  exit 1
-              }
-          }
-      }
-      else {
-          Write-Host "AUTO_REMEDIATE is set to false. Skipping remediation."
-      }
+  #       # Auto-remediation
+  #       if ($env:AUTO_REMEDIATE -eq "true") {
+  #           if ($env:SKIP_REMEDIATIONS -eq "false") {
+  #               Write-Host "No remediations to skip."
+  #               try {
+  #                   .\$edamameExe remediate
+  #                   Write-Host "Auto-remediation completed successfully."
+  #               }
+  #               catch {
+  #                   Write-Error "Auto-remediation failed. Exiting..."
+  #                   exit 1
+  #               }
+  #           }
+  #           else {
+  #               Write-Host "Skipping remediations: $env:SKIP_REMEDIATIONS"
+  #               try {
+  #                   .\$edamameExe remediate "$env:SKIP_REMEDIATIONS"
+  #                   Write-Host "Selective auto-remediation completed successfully."
+  #               }
+  #               catch {
+  #                   Write-Error "Selective auto-remediation failed. Exiting..."
+  #                   exit 1
+  #               }
+  #           }
+  #       }
+  #       else {
+  #           Write-Host "AUTO_REMEDIATE is set to false. Skipping remediation."
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Starting EDAMAME Posture process and waiting for connection..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Starting EDAMAME Posture process and waiting for connection..."
+  #       Write-Host "=============================="
 
-      # Start the EDAMAME Posture process
-      if ($env:EDAMAME_USER -and $env:EDAMAME_DOMAIN -and $env:EDAMAME_PIN -and $env:EDAMAME_ID) {
-          $startCommand = ".\$edamameExe start `"$env:EDAMAME_USER`" `"$env:EDAMAME_DOMAIN`" `"$env:EDAMAME_PIN`" `"$env:EDAMAME_ID`" `"$env:NETWORK_SCAN`""
-          
-          if ($env:WHITELIST) {
-              $startCommand += " `"$env:WHITELIST_windows`""
-          }
+  #       # Start the EDAMAME Posture process
+  #       if ($env:EDAMAME_USER -and $env:EDAMAME_DOMAIN -and $env:EDAMAME_PIN -and $env:EDAMAME_ID) {
+  #           $startCommand = ".\$edamameExe start `"$env:EDAMAME_USER`" `"$env:EDAMAME_DOMAIN`" `"$env:EDAMAME_PIN`" `"$env:EDAMAME_ID`" `"$env:NETWORK_SCAN`""
 
-          Write-Host "Executing: $startCommand"
-          try {
-              Invoke-Expression $startCommand
-              Write-Host "EDAMAME Posture started successfully."
-          }
-          catch {
-              Write-Error "Failed to start EDAMAME Posture. Exiting..."
-              exit 1
-          }
+  #           if ($env:WHITELIST) {
+  #               $startCommand += " `"$env:WHITELIST_windows`""
+  #           }
 
-          # Wait for connection
-          try {
-              .\$edamameExe wait-for-connection
-              Write-Host "Connection established successfully."
-          }
-          catch {
-              Write-Error "Failed to establish connection. Exiting..."
-              exit 1
-          }
-      }
-      else {
-          # Check for partial arguments
-          if ($env:EDAMAME_USER -or $env:EDAMAME_DOMAIN -or $env:EDAMAME_PIN -or $env:EDAMAME_ID) {
-              Write-Error "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID. Exiting..."
-              exit 1
-          }
-          else {
-              Write-Host "No EDAMAME arguments provided. Skipping start and wait steps."
-          }
-      }
+  #           Write-Host "Executing: $startCommand"
+  #           try {
+  #               Invoke-Expression $startCommand
+  #               Write-Host "EDAMAME Posture started successfully."
+  #           }
+  #           catch {
+  #               Write-Error "Failed to start EDAMAME Posture. Exiting..."
+  #               exit 1
+  #           }
 
-      Write-Host "=============================="
-      Write-Host "Checking out the repository through Git CLI if requested..."
-      Write-Host "=============================="
+  #           # Wait for connection
+  #           try {
+  #               .\$edamameExe wait-for-connection
+  #               Write-Host "Connection established successfully."
+  #           }
+  #           catch {
+  #               Write-Error "Failed to establish connection. Exiting..."
+  #               exit 1
+  #           }
+  #       }
+  #       else {
+  #           # Check for partial arguments
+  #           if ($env:EDAMAME_USER -or $env:EDAMAME_DOMAIN -or $env:EDAMAME_PIN -or $env:EDAMAME_ID) {
+  #               Write-Error "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID. Exiting..."
+  #               exit 1
+  #           }
+  #           else {
+  #               Write-Host "No EDAMAME arguments provided. Skipping start and wait steps."
+  #           }
+  #       }
 
-      # Repository Checkout with Retries
-      $attempts = 0
-      $maxAttempts = 20
-      $timeout = $true
+  #       Write-Host "=============================="
+  #       Write-Host "Checking out the repository through Git CLI if requested..."
+  #       Write-Host "=============================="
 
-      for ($i = 1; $i -le $maxAttempts; $i++) {
-          $attempts++
-          Write-Host "Attempt ${attempts}: Checking out the repository through Git CLI..."
+  #       # Repository Checkout with Retries
+  #       $attempts = 0
+  #       $maxAttempts = 20
+  #       $timeout = $true
 
-          try {
-              git init
-              git remote add origin "https://gitlab-ci-token:$env:CI_JOB_TOKEN@gitlab.com/$env:CI_PROJECT_PATH.git"
-              git fetch --depth=1 origin "$env:CI_COMMIT_REF_NAME"
-              git checkout -b "$env:CI_COMMIT_REF_NAME" FETCH_HEAD
-              
-              # Verify checkout
-              $currentCommit = git rev-parse HEAD
-              if ($currentCommit -eq $env:CI_COMMIT_SHA) {
-                  Write-Host "Repository cloned and checked out successfully."
-                  $timeout = $false
-                  break
-              }
-              else {
-                  Write-Warning "Checked out commit ($currentCommit) does not match expected SHA ($env:CI_COMMIT_SHA)."
-              }
-          }
-          catch {
-              Write-Warning "Checkout attempt $attempts failed. Retrying in 60 seconds..."
-              Start-Sleep -Seconds 60
-              Remove-Item -Recurse -Force .git
-          }
-      }
+  #       for ($i = 1; $i -le $maxAttempts; $i++) {
+  #           $attempts++
+  #           Write-Host "Attempt ${attempts}: Checking out the repository through Git CLI..."
 
-      # Calculate elapsed time
-      $elapsed_time = $attempts * 60
-      $elapsed_minutes = [math]::Floor($elapsed_time / 60)
-      $elapsed_seconds = $elapsed_time % 60
+  #           try {
+  #               git init
+  #               git remote add origin "https://gitlab-ci-token:$env:CI_JOB_TOKEN@gitlab.com/$env:CI_PROJECT_PATH.git"
+  #               git fetch --depth=1 origin "$env:CI_COMMIT_REF_NAME"
+  #               git checkout -b "$env:CI_COMMIT_REF_NAME" FETCH_HEAD
 
-      if ($timeout) {
-          Write-Error "Timeout occurred while attempting to clone the repository."
-          Write-Error "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-          exit 1
-      }
-      else {
-          Write-Host "Repository cloned successfully in ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-          Write-Host "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
-          Write-Host "Checked out commit: $(git rev-parse HEAD)"
-      }
+  #               # Verify checkout
+  #               $currentCommit = git rev-parse HEAD
+  #               if ($currentCommit -eq $env:CI_COMMIT_SHA) {
+  #                   Write-Host "Repository cloned and checked out successfully."
+  #                   $timeout = $false
+  #                   break
+  #               }
+  #               else {
+  #                   Write-Warning "Checked out commit ($currentCommit) does not match expected SHA ($env:CI_COMMIT_SHA)."
+  #               }
+  #           }
+  #           catch {
+  #               Write-Warning "Checkout attempt $attempts failed. Retrying in 60 seconds..."
+  #               Start-Sleep -Seconds 60
+  #               Remove-Item -Recurse -Force .git
+  #           }
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Checking if display_logs is enabled..."
-      Write-Host "=============================="
+  #       # Calculate elapsed time
+  #       $elapsed_time = $attempts * 60
+  #       $elapsed_minutes = [math]::Floor($elapsed_time / 60)
+  #       $elapsed_seconds = $elapsed_time % 60
 
-      # Display Logs
-      if ($env:DISPLAY_LOGS -eq "true") {
-          try {
-              .\$edamameExe logs
-              Write-Host "Displayed logs successfully."
-          }
-          catch {
-              Write-Warning "Failed to display logs."
-          }
-      }
-      else {
-          Write-Host "DISPLAY_LOGS is set to false. Skipping log display."
-      }
+  #       if ($timeout) {
+  #           Write-Error "Timeout occurred while attempting to clone the repository."
+  #           Write-Error "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+  #           exit 1
+  #       }
+  #       else {
+  #           Write-Host "Repository cloned successfully in ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+  #           Write-Host "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
+  #           Write-Host "Checked out commit: $(git rev-parse HEAD)"
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Checking if dump_sessions_log is enabled..."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Checking if display_logs is enabled..."
+  #       Write-Host "=============================="
 
-      # Dump Sessions Log
-      if ($env:DUMP_SESSIONS_LOG -eq "true") {
-          Write-Host "Dumping sessions log is not supported on Windows."
-          # If supported, uncomment and modify the following lines:
-          # try {
-          #     .\$edamameExe get-sessions
-          #     Write-Host "Sessions log dumped successfully."
-          # }
-          # catch {
-          #     if ($env:WHITELIST_CONFORMANCE -eq "true") {
-          #         Write-Error "Failed to dump sessions log with WHITELIST_CONFORMANCE=true. Exiting..."
-          #         exit 1
-          #     }
-          #     else {
-          #         Write-Warning "Failed to dump sessions log."
-          #     }
-          # }
-      }
-      else {
-          Write-Host "DUMP_SESSIONS_LOG is set to false. Skipping sessions log dump."
-      }
+  #       # Display Logs
+  #       if ($env:DISPLAY_LOGS -eq "true") {
+  #           try {
+  #               .\$edamameExe logs
+  #               Write-Host "Displayed logs successfully."
+  #           }
+  #           catch {
+  #               Write-Warning "Failed to display logs."
+  #           }
+  #       }
+  #       else {
+  #           Write-Host "DISPLAY_LOGS is set to false. Skipping log display."
+  #       }
 
-      Write-Host "=============================="
-      Write-Host "Windows setup for EDAMAME Posture completed successfully."
-      Write-Host "=============================="
+  #       Write-Host "=============================="
+  #       Write-Host "Checking if dump_sessions_log is enabled..."
+  #       Write-Host "=============================="
 
-      # PowerShell Script Ends
+  #       # Dump Sessions Log
+  #       if ($env:DUMP_SESSIONS_LOG -eq "true") {
+  #           Write-Host "Dumping sessions log is not supported on Windows."
+  #           # If supported, uncomment and modify the following lines:
+  #           # try {
+  #           #     .\$edamameExe get-sessions
+  #           #     Write-Host "Sessions log dumped successfully."
+  #           # }
+  #           # catch {
+  #           #     if ($env:WHITELIST_CONFORMANCE -eq "true") {
+  #           #         Write-Error "Failed to dump sessions log with WHITELIST_CONFORMANCE=true. Exiting..."
+  #           #         exit 1
+  #           #     }
+  #           #     else {
+  #           #         Write-Warning "Failed to dump sessions log."
+  #           #     }
+  #           # }
+  #       }
+  #       else {
+  #           Write-Host "DUMP_SESSIONS_LOG is set to false. Skipping sessions log dump."
+  #       }
+
+  #       Write-Host "=============================="
+  #       Write-Host "Windows setup for EDAMAME Posture completed successfully."
+  #       Write-Host "=============================="
+
+  #       # PowerShell Script Ends
 
   variables:
     AUTO_REMEDIATE: "false" # Set to "true" to enable auto-remediation
