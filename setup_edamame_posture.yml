@@ -37,6 +37,12 @@
         echo "Linux environment setup complete."
       elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
         echo "No additional setup required for $CI_RUNNER_OS."
+         
+      else
+        echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
+        exit 1
+      fi
+
     - |
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
