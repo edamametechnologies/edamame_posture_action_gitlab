@@ -8,11 +8,11 @@
     # - mkdir -p ~/bin && echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo && chmod +x ~/bin/sudo && echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null && export PATH="$HOME/bin:$PATH"
     - |
       echo "Determining the Runner's OS based on tags..."
-      if [[ "$CI_RUNNER_TAGS" =~ macos || "$CI_RUNNER_TAGS" =~ darwin ]]; then
+      if [[ "$CI_RUNNER_TAGS" =~ macos]]; then
         export CI_RUNNER_OS="macos"
       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
         export CI_RUNNER_OS="linux"
-      elif [[ "$CI_RUNNER_TAGS" =~ windows || "$CI_RUNNER_TAGS" =~ win ]]; then
+      elif [[ "$CI_RUNNER_TAGS" =~ windows]]; then
         export CI_RUNNER_OS="windows"
       else
         echo "Unable to determine Runner's OS from tags."
