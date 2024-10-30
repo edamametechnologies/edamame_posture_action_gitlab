@@ -21,7 +21,7 @@
       echo "Detected Runner OS: $CI_RUNNER_OS"
     - |
       echo "Downloading EDAMAME Posture binary based on OS..."
-      echo "OS: $CI_RUNNER_TAGS"
+      echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture ]]; then
