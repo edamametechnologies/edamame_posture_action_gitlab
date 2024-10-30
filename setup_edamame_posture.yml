@@ -87,7 +87,7 @@
           fi
           ./edamame_posture.exe wait-for-connection
         else
-          if [[ "$CI_RUNNER_OS" == "darwin" ]]; then
+          if [[ "$CI_RUNNER_OS" == "macos" ]]; then
             if [[ -n "$WHITELIST" ]]; then
               sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
             else
