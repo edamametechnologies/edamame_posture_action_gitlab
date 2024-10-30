@@ -2,10 +2,10 @@
 
 .setup_edamame_posture:
   stage: setup
-  before_script:
-    - apt-get update && apt-get install -y git libpcap0.8 wget
+  # before_script:
+  #   - apt-get update && apt-get install -y git libpcap0.8 wget
   script:
-    - mkdir -p ~/bin && echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo && chmod +x ~/bin/sudo && echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null && export PATH="$HOME/bin:$PATH"
+    # - mkdir -p ~/bin && echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo && chmod +x ~/bin/sudo && echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null && export PATH="$HOME/bin:$PATH"
     - |
       echo "Determining the Runner's OS based on tags..."
       if [[ "$CI_RUNNER_TAGS" =~ macos || "$CI_RUNNER_TAGS" =~ darwin ]]; then
@@ -19,6 +19,24 @@
         export CI_RUNNER_OS="unknown"
       fi
       echo "Detected Runner OS: $CI_RUNNER_OS"
+      # Conditional commands based on detected OS
+      if [[ "$CI_RUNNER_OS" == "linux" ]]; then
+        echo "Setting up environment for Linux..."
+        
+        # Update package lists and install necessary packages
+        apt-get update && apt-get install -y git libpcap0.8 wget
+        
+        # Create a custom sudo script and update PATH
+        mkdir -p ~/bin
+        echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+        chmod +x ~/bin/sudo
+        echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
+        export PATH="$HOME/bin:$PATH"
+        
+        echo "Linux environment setup complete."
+
+      elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
+        echo "No additional setup required for $CI_RUNNER_OS."
     - |
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
