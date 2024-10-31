@@ -112,6 +112,9 @@
       fi
 
     - |
+      sudo ./edamame_posture status
+
+    - |
       echo 'Checkout the repo through the git CLI if requested'
       attempts=0
       timeout=true
