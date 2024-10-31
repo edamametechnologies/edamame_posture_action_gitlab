@@ -1,5 +1,3 @@
-# templates/setup_edamame_posture.yml
-
 .setup_edamame_posture:
   stage: setup
   before_script:
@@ -110,9 +108,6 @@
           exit 1
         fi
       fi
-
-    - |
-      sudo ./edamame_posture status
 
     - |
       echo 'Checkout the repo through the git CLI if requested'
