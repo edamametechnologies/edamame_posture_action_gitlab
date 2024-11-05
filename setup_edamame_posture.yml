@@ -1,55 +1,35 @@
+# templates/setup_edamame_posture.yml
+
 .setup_edamame_posture:
   stage: setup
+  before_script:
+    - apt-get update && apt-get install -y git libpcap0.8 wget
   script:
+    - mkdir -p ~/bin && echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo && chmod +x ~/bin/sudo && echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null && export PATH="$HOME/bin:$PATH"
     - |
       echo "Determining the Runner's OS based on tags..."
-      if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
+      if [[ "$CI_RUNNER_TAGS" =~ macos || "$CI_RUNNER_TAGS" =~ darwin ]]; then
         export CI_RUNNER_OS="macos"
       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
         export CI_RUNNER_OS="linux"
-      elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
+      elif [[ "$CI_RUNNER_TAGS" =~ windows || "$CI_RUNNER_TAGS" =~ win ]]; then
         export CI_RUNNER_OS="windows"
       else
         echo "Unable to determine Runner's OS from tags."
         export CI_RUNNER_OS="unknown"
       fi
       echo "Detected Runner OS: $CI_RUNNER_OS"
-      # Conditional commands based on detected OS
-    - |
-      if [[ "$CI_RUNNER_OS" == "linux" ]]; then
-        echo "Setting up environment for Linux..."
-
-        # Update package lists and install necessary packages
-        apt-get update && apt-get install -y git libpcap0.8 wget
-
-        # Create a custom sudo script and update PATH
-        mkdir -p ~/bin
-        echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
-        chmod +x ~/bin/sudo
-        echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
-        export PATH="$HOME/bin:$PATH"
-
-        echo "Linux environment setup complete."
-      elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
-        echo "No additional setup required for $CI_RUNNER_OS."
-
-      else
-        echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
-        exit 1
-      fi
-
     - |
       echo "Downloading EDAMAME Posture binary based on OS..."
-      echo "OS: $CI_RUNNER_OS"
+      echo "OS: $CI_RUNNER_TAGS"
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture ]]; then
-            # wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/0.6.2/edamame_posture
+            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
             chmod +x edamame_posture
           fi
           ;;
-        "macos")
+        "darwin")
           if [[ ! -f edamame_posture ]]; then
             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
             chmod +x edamame_posture
@@ -68,17 +48,29 @@
 
     - |
       echo "Showing initial posture..."
-      sudo ./edamame_posture score
+      if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+        ./edamame_posture.exe score
+      else
+        sudo ./edamame_posture score
+      fi
 
     - |
       echo "Auto-remediating posture issues if requested..."
       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
         if [[ -z "$SKIP_REMEDIATIONS" ]]; then
           echo "No remediations to skip."
-          sudo ./edamame_posture remediate
+          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+            ./edamame_posture.exe remediate
+          else
+            sudo ./edamame_posture remediate
+          fi
         else
           echo "Skipping remediations: $SKIP_REMEDIATIONS"
-          sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
+          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+            ./edamame_posture.exe remediate "$SKIP_REMEDIATIONS"
+          else
+            sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
+          fi
         fi
       fi
     #TODO ADD SLEEP IF REQUESTED
@@ -86,12 +78,31 @@
       echo "Starting EDAMAME Posture process and waiting for connection..."
       # Check if all arguments are provided
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
-        # if [[ -n "$WHITELIST" ]]; then
-          # sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
-        # else
-          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-        # fi
-        sudo ./edamame_posture wait-for-connection
+        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+          # No sudo on Windows
+          if [[ -n "$WHITELIST" ]]; then
+            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_windows"
+          else
+            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+          fi
+          ./edamame_posture.exe wait-for-connection
+        else
+          if [[ "$CI_RUNNER_OS" == "darwin" ]]; then
+            if [[ -n "$WHITELIST" ]]; then
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
+            else
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+            fi
+            sudo ./edamame_posture wait-for-connection
+          elif [[ "$CI_RUNNER_OS" == "linux" ]]; then
+            if [[ -n "$WHITELIST" ]]; then
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
+            else
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMame_ID" "$NETWORK_SCAN"
+            fi
+            sudo ./edamame_posture wait-for-connection
+          fi
+        fi
       else
         # Check if only a partial set of mandatory arguments is provided
         if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
@@ -145,13 +156,26 @@
     - |
       echo "Checking if display_logs is enabled..."
       if [[ "$DISPLAY_LOGS" == "true" ]]; then
-        sudo ./edamame_posture logs
+        # cd ..
+        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+          # No sudo on Windows
+          ./edamame_posture.exe logs
+        else
+          sudo ./edamame_posture logs
+        fi
       fi
 
     - |
       echo "Checking if dump_sessions_log is enabled..."
       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
-        sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+        # cd ..
+        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
+          # Not in place due to license issues
+          #./edamame_posture.exe get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+          echo "Dumping sessions log is not supported on Windows."
+        else
+          sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+        fi
       fi
 
   variables:
@@ -162,8 +186,173 @@
     CHECKOUT: "false"
     CHECKOUT_SUBMODULES: "false"
     DISPLAY_LOGS: "true"
-    # WHITELIST: "github"
+    WHITELIST: "github"
     WHITELIST_CONFORMANCE: "false"
+# .setup_edamame_posture:
+#   stage: setup
+#   script:
+#     - |
+#       echo "Determining the Runner's OS based on tags..."
+#       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
+#         export CI_RUNNER_OS="macos"
+#       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+#         export CI_RUNNER_OS="linux"
+#       elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
+#         export CI_RUNNER_OS="windows"
+#       else
+#         echo "Unable to determine Runner's OS from tags."
+#         export CI_RUNNER_OS="unknown"
+#       fi
+#       echo "Detected Runner OS: $CI_RUNNER_OS"
+#       # Conditional commands based on detected OS
+#     - |
+#       if [[ "$CI_RUNNER_OS" == "linux" ]]; then
+#         echo "Setting up environment for Linux..."
+
+#         # Update package lists and install necessary packages
+#         apt-get update && apt-get install -y git libpcap0.8 wget
+
+#         # Create a custom sudo script and update PATH
+#         mkdir -p ~/bin
+#         echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+#         chmod +x ~/bin/sudo
+#         echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
+#         export PATH="$HOME/bin:$PATH"
+
+#         echo "Linux environment setup complete."
+#       elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
+#         echo "No additional setup required for $CI_RUNNER_OS."
+
+#       else
+#         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
+#         exit 1
+#       fi
+
+#     - |
+#       echo "Downloading EDAMAME Posture binary based on OS..."
+#       echo "OS: $CI_RUNNER_OS"
+#       case "$CI_RUNNER_OS" in
+#         "linux")
+#           if [[ ! -f edamame_posture ]]; then
+#             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+#             chmod +x edamame_posture
+#           fi
+#           ;;
+#         "macos")
+#           if [[ ! -f edamame_posture ]]; then
+#             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
+#             chmod +x edamame_posture
+#           fi
+#           ;;
+#         "windows")
+#           if [[ ! -f edamame_posture.exe ]]; then
+#             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
+#           fi
+#           ;;
+#         *)
+#           echo "Unsupported OS: $CI_RUNNER_OS"
+#           exit 1
+#           ;;
+#       esac
+
+#     - |
+#       echo "Showing initial posture..."
+#       sudo ./edamame_posture score
+
+#     - |
+#       echo "Auto-remediating posture issues if requested..."
+#       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
+#         if [[ -z "$SKIP_REMEDIATIONS" ]]; then
+#           echo "No remediations to skip."
+#           sudo ./edamame_posture remediate
+#         else
+#           echo "Skipping remediations: $SKIP_REMEDIATIONS"
+#           sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
+#         fi
+#       fi
+#     #TODO ADD SLEEP IF REQUESTED
+#     - |
+#       echo "Starting EDAMAME Posture process and waiting for connection..."
+#       # Check if all arguments are provided
+#       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
+#         if [[ -n "$WHITELIST" ]]; then
+#           EDAMAME_LOG_LEVEL=debug sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
+#         else
+#           sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+#         fi
+#         sudo ./edamame_posture wait-for-connection
+#       else
+#         # Check if only a partial set of mandatory arguments is provided
+#         if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
+#           echo "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID"
+#           exit 1
+#         fi
+#       fi
+
+#     - |
+#       echo 'Checkout the repo through the git CLI if requested'
+#       attempts=0
+#       timeout=true
+
+#       for i in {1..20}; do
+#         attempts=$((attempts + 1))
+#         echo "Attempt $attempts: Checking out the repo through the Git CLI..."
+#         if git init && \
+#            git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git && \
+#            git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
+#           if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
+#             timeout=false
+#             break
+#           fi
+#         else
+#           echo "Checkout failed. Waiting for 60 seconds before retrying..."
+#           sleep 60
+#           rm -rf .git
+#         fi
+#       done
+
+#       elapsed_time=$((attempts * 60))
+#       elapsed_minutes=$((elapsed_time / 60))
+#       elapsed_seconds=$((elapsed_time % 60))
+
+#       if [ "$timeout" = true ]; then
+#         echo "Timeout occurred while attempting to clone the repository."
+#         echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+#         exit 1
+#       else
+#         echo "Repository cloned successfully."
+#         echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+#         echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
+#         echo "Checked out commit: $(git rev-parse HEAD)"
+#         if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
+#           echo "Warning: The checked out commit does not match the expected SHA."
+#           echo "Expected: $CI_COMMIT_SHA"
+#           echo "Actual: $(git rev-parse HEAD)"
+#         fi
+#       fi
+
+#     - |
+#       echo "Checking if display_logs is enabled..."
+#       if [[ "$DISPLAY_LOGS" == "true" ]]; then
+#         sudo ./edamame_posture logs
+#       fi
+
+#     - |
+#       echo "Checking if dump_sessions_log is enabled..."
+#       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
+#         sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+#       fi
+
+#   variables:
+#     AUTO_REMEDIATE: "false"
+#     SKIP_REMEDIATIONS: "false"
+#     NETWORK_SCAN: "false"
+#     DUMP_SESSIONS_LOG: "false"
+#     CHECKOUT: "false"
+#     CHECKOUT_SUBMODULES: "false"
+#     DISPLAY_LOGS: "true"
+#     WHITELIST: "github"
+#     WHITELIST_CONFORMANCE: "false"
 
 .setup_edamame_posture_windows:
   stage: setup
