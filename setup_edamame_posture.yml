@@ -490,7 +490,7 @@
 
 .setup_edamame_posture:
   stage: setup
-  script:
+  before_script:
     # Step 1: Detect the Runner's OS
     - |
       echo "Determining the Runner's OS..."
