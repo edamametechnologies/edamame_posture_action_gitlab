@@ -115,8 +115,10 @@
             sudo ./edamame_posture wait-for-connection
           elif [[ "$CI_RUNNER_OS" == "linux" ]]; then
             if [[ -n "$WHITELIST" ]]; then
+              echo "Starting posture with whitelist: ${WHITELIST}_ubuntu for linux"
               sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
             else
+              echo "Starting posture without whitelist... for linux"
               sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
             fi
             sudo ./edamame_posture wait-for-connection
