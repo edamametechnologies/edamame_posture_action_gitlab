@@ -1,6 +1,6 @@
 # setup_edamame_posture_windows.yml
 .setup_edamame_posture_windows:
-  script:
+  before_script:
     # toto2
     - echo "toto"
 # .setup_edamame_posture_windows:
