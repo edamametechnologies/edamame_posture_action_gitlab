@@ -44,7 +44,8 @@
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+            # wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/0.6.2/edamame_posture
             chmod +x edamame_posture
           fi
           ;;
@@ -67,29 +68,17 @@
 
     - |
       echo "Showing initial posture..."
-      if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-        ./edamame_posture.exe score
-      else
-        sudo ./edamame_posture score
-      fi
+      sudo ./edamame_posture score
 
     - |
       echo "Auto-remediating posture issues if requested..."
       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
         if [[ -z "$SKIP_REMEDIATIONS" ]]; then
           echo "No remediations to skip."
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate
-          else
-            sudo ./edamame_posture remediate
-          fi
+          sudo ./edamame_posture remediate
         else
           echo "Skipping remediations: $SKIP_REMEDIATIONS"
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate "$SKIP_REMEDIATIONS"
-          else
-            sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
-          fi
+          sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
         fi
       fi
     #TODO ADD SLEEP IF REQUESTED
@@ -156,26 +145,13 @@
     - |
       echo "Checking if display_logs is enabled..."
       if [[ "$DISPLAY_LOGS" == "true" ]]; then
-        # cd ..
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # No sudo on Windows
-          ./edamame_posture.exe logs
-        else
-          sudo ./edamame_posture logs
-        fi
+        sudo ./edamame_posture logs
       fi
 
     - |
       echo "Checking if dump_sessions_log is enabled..."
       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
-        # cd ..
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # Not in place due to license issues
-          #./edamame_posture.exe get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
-          echo "Dumping sessions log is not supported on Windows."
-        else
-          sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
-        fi
+        sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
       fi
 
   variables:
