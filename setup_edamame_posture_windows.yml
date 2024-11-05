@@ -28,7 +28,7 @@
         Write-Output "Git installation completed."
         
         # Update PATH environment variable
-        $env:PATH += ";C:\Program Files\Git\bin;C:\Program Files\Git\usr\bin"
+        $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
         
         # Verify Git Bash installation
         $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
@@ -61,9 +61,12 @@
       # Function to convert Windows path to Unix path
       function ConvertTo-UnixPath($winPath) {
           # Replace backslashes with forward slashes
-          $unixPath = $winPath -replace '\\','/'
+          $unixPath = $winPath -replace '\\', '/'
           # Replace drive letter (e.g., C:) with /c
-          $unixPath = $unixPath -replace '^([A-Za-z]):', '/$($matches[1].ToLower())'
+          $unixPath = $unixPath -replace '^([A-Za-z]):', {
+              param($driveLetter)
+              '/'+$driveLetter[0].ToLower()
+          }
           return $unixPath
       }
 
