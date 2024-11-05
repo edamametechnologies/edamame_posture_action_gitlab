@@ -40,22 +40,24 @@
     # Step 4: Create a Bash script with all your commands
     - |
       $bashScriptContent = @'
-#!/bin/bash
-set -e  # Exit immediately if a command exits with a non-zero status
+      #!/bin/bash
+      set -e  # Exit immediately if a command exits with a non-zero status
 
-echo "Determining the Runner's OS based on tags..."
-if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
-  export CI_RUNNER_OS="macos"
-elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
-  export CI_RUNNER_OS="linux"
-elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
-  export CI_RUNNER_OS="windows"
-else
-  echo "Unable to determine Runner's OS from tags."
-  export CI_RUNNER_OS="unknown"
-fi
-echo "Detected Runner OS: $CI_RUNNER_OS"
-'@
+      echo "Determining the Runner's OS based on tags..."
+      if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
+        export CI_RUNNER_OS="macos"
+      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+        export CI_RUNNER_OS="linux"
+      elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
+        export CI_RUNNER_OS="windows"
+      else
+        echo "Unable to determine Runner's OS from tags."
+        export CI_RUNNER_OS="unknown"
+      fi
+      echo "Detected Runner OS: $CI_RUNNER_OS"
+
+      # Rest of your Bash script goes here
+      '@
 
       # Save the Bash script to a temporary file
       $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
@@ -75,7 +77,6 @@ echo "Detected Runner OS: $CI_RUNNER_OS"
     DISPLAY_LOGS: "true"
     WHITELIST: "github"
     WHITELIST_CONFORMANCE: "false"
-
 # .setup_edamame_posture_windows:
 #   stage: setup
 #   before_script:
