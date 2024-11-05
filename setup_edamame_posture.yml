@@ -97,33 +97,12 @@
       echo "Starting EDAMAME Posture process and waiting for connection..."
       # Check if all arguments are provided
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # No sudo on Windows
-          if [[ -n "$WHITELIST" ]]; then
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_windows"
-          else
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-          fi
-          ./edamame_posture.exe wait-for-connection
+        if [[ -n "$WHITELIST" ]]; then
+          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
         else
-          if [[ "$CI_RUNNER_OS" == "macos" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
-            else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          elif [[ "$CI_RUNNER_OS" == "linux" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              echo "Starting posture with whitelist: ${WHITELIST}_ubuntu for linux"
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
-            else
-              echo "Starting posture without whitelist... for linux"
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          fi
+          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
         fi
+        sudo ./edamame_posture wait-for-connection
       else
         # Check if only a partial set of mandatory arguments is provided
         if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
