@@ -57,9 +57,9 @@
       echo "Running Bash script..."
       '@
 
-      # Save the Bash script to a temporary file
+      # Save the Bash script to a temporary file without BOM
       $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
-      Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding UTF8
+      Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding Ascii
 
       # Function to convert Windows path to Unix path
       function ConvertTo-UnixPath($winPath) {
