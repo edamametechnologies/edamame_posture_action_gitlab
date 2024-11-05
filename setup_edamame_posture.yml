@@ -1,25 +1,46 @@
 # .setup_edamame_posture:
 #   stage: setup
-#   before_script:
-#     - apt-get update && apt-get install -y git libpcap0.8 wget
 #   script:
-#     - mkdir -p ~/bin && echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo && chmod +x ~/bin/sudo && echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null && export PATH="$HOME/bin:$PATH"
 #     - |
 #       echo "Determining the Runner's OS based on tags..."
-#       if [[ "$CI_RUNNER_TAGS" =~ macos || "$CI_RUNNER_TAGS" =~ darwin ]]; then
+#       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
 #         export CI_RUNNER_OS="macos"
 #       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
 #         export CI_RUNNER_OS="linux"
-#       elif [[ "$CI_RUNNER_TAGS" =~ windows || "$CI_RUNNER_TAGS" =~ win ]]; then
+#       elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
 #         export CI_RUNNER_OS="windows"
 #       else
 #         echo "Unable to determine Runner's OS from tags."
 #         export CI_RUNNER_OS="unknown"
 #       fi
 #       echo "Detected Runner OS: $CI_RUNNER_OS"
+#       # Conditional commands based on detected OS
+#     - |
+#       if [[ "$CI_RUNNER_OS" == "linux" ]]; then
+#         echo "Setting up environment for Linux..."
+
+#         # Update package lists and install necessary packages
+#         apt-get update && apt-get install -y git libpcap0.8 wget
+
+#         # Create a custom sudo script and update PATH
+#         mkdir -p ~/bin
+#         echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+#         chmod +x ~/bin/sudo
+#         echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
+#         export PATH="$HOME/bin:$PATH"
+
+#         echo "Linux environment setup complete."
+#       elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
+#         echo "No additional setup required for $CI_RUNNER_OS."
+
+#       else
+#         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
+#         exit 1
+#       fi
+
 #     - |
 #       echo "Downloading EDAMAME Posture binary based on OS..."
-#       echo "OS: $CI_RUNNER_TAGS"
+#       echo "OS: $CI_RUNNER_OS"
 #       case "$CI_RUNNER_OS" in
 #         "linux")
 #           if [[ ! -f edamame_posture ]]; then
@@ -27,7 +48,7 @@
 #             chmod +x edamame_posture
 #           fi
 #           ;;
-#         "darwin")
+#         "macos")
 #           if [[ ! -f edamame_posture ]]; then
 #             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
 #             chmod +x edamame_posture
@@ -85,7 +106,7 @@
 #           fi
 #           ./edamame_posture.exe wait-for-connection
 #         else
-#           if [[ "$CI_RUNNER_OS" == "darwin" ]]; then
+#           if [[ "$CI_RUNNER_OS" == "macos" ]]; then
 #             if [[ -n "$WHITELIST" ]]; then
 #               sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
 #             else
@@ -187,261 +208,63 @@
 #     WHITELIST: "github"
 #     WHITELIST_CONFORMANCE: "false"
 
-.setup_edamame_posture:
-  stage: setup
-  script:
-    - |
-      echo "Determining the Runner's OS based on tags..."
-      if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
-        export CI_RUNNER_OS="macos"
-      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
-        export CI_RUNNER_OS="linux"
-      elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
-        export CI_RUNNER_OS="windows"
-      else
-        echo "Unable to determine Runner's OS from tags."
-        export CI_RUNNER_OS="unknown"
-      fi
-      echo "Detected Runner OS: $CI_RUNNER_OS"
-      # Conditional commands based on detected OS
-    - |
-      if [[ "$CI_RUNNER_OS" == "linux" ]]; then
-        echo "Setting up environment for Linux..."
-
-        # Update package lists and install necessary packages
-        apt-get update && apt-get install -y git libpcap0.8 wget
-
-        # Create a custom sudo script and update PATH
-        mkdir -p ~/bin
-        echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
-        chmod +x ~/bin/sudo
-        echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
-        export PATH="$HOME/bin:$PATH"
-
-        echo "Linux environment setup complete."
-      elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
-        echo "No additional setup required for $CI_RUNNER_OS."
-
-      else
-        echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
-        exit 1
-      fi
-
-    - |
-      echo "Downloading EDAMAME Posture binary based on OS..."
-      echo "OS: $CI_RUNNER_OS"
-      case "$CI_RUNNER_OS" in
-        "linux")
-          if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
-            chmod +x edamame_posture
-          fi
-          ;;
-        "macos")
-          if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
-            chmod +x edamame_posture
-          fi
-          ;;
-        "windows")
-          if [[ ! -f edamame_posture.exe ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
-          fi
-          ;;
-        *)
-          echo "Unsupported OS: $CI_RUNNER_OS"
-          exit 1
-          ;;
-      esac
-
-    - |
-      echo "Showing initial posture..."
-      if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-        ./edamame_posture.exe score
-      else
-        sudo ./edamame_posture score
-      fi
-
-    - |
-      echo "Auto-remediating posture issues if requested..."
-      if [[ "$AUTO_REMEDIATE" == "true" ]]; then
-        if [[ -z "$SKIP_REMEDIATIONS" ]]; then
-          echo "No remediations to skip."
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate
-          else
-            sudo ./edamame_posture remediate
-          fi
-        else
-          echo "Skipping remediations: $SKIP_REMEDIATIONS"
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate "$SKIP_REMEDIATIONS"
-          else
-            sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
-          fi
-        fi
-      fi
-    #TODO ADD SLEEP IF REQUESTED
-    - |
-      echo "Starting EDAMAME Posture process and waiting for connection..."
-      # Check if all arguments are provided
-      if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # No sudo on Windows
-          if [[ -n "$WHITELIST" ]]; then
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_windows"
-          else
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-          fi
-          ./edamame_posture.exe wait-for-connection
-        else
-          if [[ "$CI_RUNNER_OS" == "macos" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
-            else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          elif [[ "$CI_RUNNER_OS" == "linux" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
-            else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMame_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          fi
-        fi
-      else
-        # Check if only a partial set of mandatory arguments is provided
-        if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
-          echo "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID"
-          exit 1
-        fi
-      fi
-
-    - |
-      echo 'Checkout the repo through the git CLI if requested'
-      attempts=0
-      timeout=true
-
-      for i in {1..20}; do
-        attempts=$((attempts + 1))
-        echo "Attempt $attempts: Checking out the repo through the Git CLI..."
-        if git init && \
-           git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git && \
-           git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
-          if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
-            timeout=false
-            break
-          fi
-        else
-          echo "Checkout failed. Waiting for 60 seconds before retrying..."
-          sleep 60
-          rm -rf .git
-        fi
-      done
-
-      elapsed_time=$((attempts * 60))
-      elapsed_minutes=$((elapsed_time / 60))
-      elapsed_seconds=$((elapsed_time % 60))
-
-      if [ "$timeout" = true ]; then
-        echo "Timeout occurred while attempting to clone the repository."
-        echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        exit 1
-      else
-        echo "Repository cloned successfully."
-        echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
-        echo "Checked out commit: $(git rev-parse HEAD)"
-        if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
-          echo "Warning: The checked out commit does not match the expected SHA."
-          echo "Expected: $CI_COMMIT_SHA"
-          echo "Actual: $(git rev-parse HEAD)"
-        fi
-      fi
-
-    - |
-      echo "Checking if display_logs is enabled..."
-      if [[ "$DISPLAY_LOGS" == "true" ]]; then
-        # cd ..
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # No sudo on Windows
-          ./edamame_posture.exe logs
-        else
-          sudo ./edamame_posture logs
-        fi
-      fi
-
-    - |
-      echo "Checking if dump_sessions_log is enabled..."
-      if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
-        # cd ..
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          # Not in place due to license issues
-          #./edamame_posture.exe get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
-          echo "Dumping sessions log is not supported on Windows."
-        else
-          sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
-        fi
-      fi
-
-  variables:
-    AUTO_REMEDIATE: "false"
-    SKIP_REMEDIATIONS: "false"
-    NETWORK_SCAN: "false"
-    DUMP_SESSIONS_LOG: "false"
-    CHECKOUT: "false"
-    CHECKOUT_SUBMODULES: "false"
-    DISPLAY_LOGS: "true"
-    WHITELIST: "github"
-    WHITELIST_CONFORMANCE: "false"
 # .setup_edamame_posture_windows:
 #   stage: setup
-#   script:
-#     # Step 1: Install Git if not already installed (Windows Only)
+#   before_script:
+#     # Step 1: Check for bash.exe (Git Bash) and Install Git if Not Found
 #     - |
-#       if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-#         Write-Output "Git not found. Installing Git..."
+#       # Try to find bash.exe using Get-Command
+#       $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
+#       if ($bashCommand) {
+#         $gitBashPath = $bashCommand.Source
+#         Write-Output "Git Bash found at $gitBashPath."
+#       } else {
+#         # If bash.exe not found, proceed to install Git with Git Bash
+#         Write-Output "Git Bash not found. Installing Git with Git Bash..."
 
 #         # Define Git installer URL (update version as needed)
-#         $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.40.0.windows.1/Git-2.40.0-64-bit.exe"
+#         $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.42.0.windows.1/Git-2.42.0-64-bit.exe"
 #         $installerPath = "$env:TEMP\git-installer.exe"
 
 #         # Download Git installer
 #         Invoke-WebRequest -Uri $gitInstallerUrl -OutFile $installerPath
 
-#         # Install Git silently
-#         Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART" -Wait
+#         # Install Git silently with Git Bash component and add to PATH
+#         Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART /COMPONENTS=""icons,ext\reg\shellhere,ext\reg\contextmenu,gitlfs,assoc,assoc_sh"" /TASKS=""!desktopicon,add_path"" /DIR=""C:\Program Files\Git""" -Wait
 
 #         # Remove installer after installation
 #         Remove-Item $installerPath -Force
 
 #         Write-Output "Git installation completed."
-#       } else {
-#         Write-Output "Git is already installed."
+
+#         # Update PATH environment variable
+#         $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
+
+#         # Verify Git Bash installation
+#         $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
+#         if ($bashCommand) {
+#           $gitBashPath = $bashCommand.Source
+#           Write-Output "Git Bash found at $gitBashPath."
+#         } else {
+#           Write-Output "Failed to install Git Bash."
+#           exit 1
+#         }
 #       }
 
-#     # Step 2: Verify Git installation
-#     - git --version
-
-#     # Step 3: Define Git Bash path (Windows Only)
+#     # Step 2: Update PATH and Verify Git installation
 #     - |
-#       $gitBashPath = "C:\Program Files\Git\bin\bash.exe"
-#       if (Test-Path $gitBashPath) {
-#         Write-Output "Git Bash found at $gitBashPath."
-#       } else {
-#         Write-Output "Git Bash not found at $gitBashPath."
-#         exit 1
-#       }
+#       # Ensure the new Git is in the PATH
+#       $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
+#       git --version
 
-#     # Step 4: Create a Bash script with all your commands
+#     # Step 3: Create a Bash script with all your commands
 #     - |
-#       $bashScriptContent = @"
+#       $bashScriptContent = @'
 #       #!/bin/bash
 #       set -e  # Exit immediately if a command exits with a non-zero status
 
-#       echo "Determining the Runner's OS based on tags..."
+#       # Your Bash script content goes here
+#       echo "Running Bash script..."
 #       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
 #         export CI_RUNNER_OS="macos"
 #       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
@@ -626,21 +449,33 @@
 #           sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
 #         fi
 #       fi
-#       "@
+#       '@
 
-#       # Save the Bash script to a temporary file
+#       # Save the Bash script to a temporary file without BOM
 #       $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
-#       Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding UTF8
+#       Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding Ascii
 
-#     # Step 5: Execute the Bash script using Git Bash (Windows) or directly (Linux/macOS)
+#       # Function to convert Windows path to Unix path
+#       function ConvertTo-UnixPath($winPath) {
+#           # Replace backslashes with forward slashes
+#           $unixPath = $winPath -replace '\\', '/'
+#           # Extract drive letter
+#           if ($unixPath -match '^([A-Za-z]):(.*)') {
+#               $driveLetter = $matches[1].ToLower()
+#               $pathAfterDrive = $matches[2]
+#               # Prepend /driveletter to the path
+#               $unixPath = "/$driveLetter$pathAfterDrive"
+#           }
+#           return $unixPath
+#       }
+
+#       # Convert the Windows path to Unix path
+#       $unixBashScriptPath = ConvertTo-UnixPath $bashScriptPath
+#       Write-Output "Unix-style script path: $unixBashScriptPath"
+
+#     # Step 4: Execute the Bash script using Git Bash
 #     - |
-#       if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-#         & "$gitBashPath" -c "bash $env:TEMP/setup_edamame_posture.sh"
-#       else
-#         # For Linux and macOS, execute the script directly
-#         chmod +x $env:TEMP/setup_edamame_posture.sh
-#         bash $env:TEMP/setup_edamame_posture.sh
-#       fi
+#       & "$gitBashPath" -c "bash $unixBashScriptPath"
 
 #   variables:
 #     AUTO_REMEDIATE: "false"
@@ -652,604 +487,434 @@
 #     DISPLAY_LOGS: "true"
 #     WHITELIST: "github"
 #     WHITELIST_CONFORMANCE: "false"
-# .setup_edamame_posture_powershell:
-#   stage: setup
-#   script:
-#     - |
-#       # PowerShell Script Begins
-
-#       Write-Host "=============================="
-#       Write-Host "Determining the Runner's OS based on tags..."
-#       Write-Host "=============================="
-
-#       # Determine Runner OS
-#       if ($env:CI_RUNNER_TAGS -match "windows") {
-#           $env:CI_RUNNER_OS = "windows"
-#       }
-#       else {
-#           Write-Host "Unable to determine Runner's OS from tags."
-#           $env:CI_RUNNER_OS = "unknown"
-#       }
-#       Write-Host "Detected Runner OS: $env:CI_RUNNER_OS"
-
-#       # Exit if OS is unknown
-#       if ($env:CI_RUNNER_OS -eq "unknown") {
-#           Write-Error "Unsupported OS: $env:CI_RUNNER_OS. Exiting..."
-#           exit 1
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Ensuring Chocolatey is installed..."
-#       Write-Host "=============================="
-
-#       # Check if Chocolatey is installed
-#       if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-#           Write-Host "Chocolatey not found. Installing Chocolatey..."
-#           Set-ExecutionPolicy Bypass -Scope Process -Force
-#           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-#           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-#           if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
-#               Write-Error "Chocolatey installation failed. Exiting..."
-#               exit 1
-#           }
-#           Write-Host "Chocolatey installed successfully."
-#       }
-#       else {
-#           Write-Host "Chocolatey is already installed."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Installing wget and curl via Chocolatey if not already installed..."
-#       Write-Host "=============================="
-
-#       # Install wget if not installed
-#       if (-not (choco list --local-only | Select-String '^wget$')) {
-#           Write-Host "Installing wget..."
-#           choco install wget -y
-#           if (-not (Get-Command wget -ErrorAction SilentlyContinue)) {
-#               Write-Error "wget installation failed. Exiting..."
-#               exit 1
-#           }
-#           Write-Host "wget installed successfully."
-#       }
-#       else {
-#           Write-Host "wget is already installed."
-#       }
-
-#       # Install curl if not installed
-#       if (-not (choco list --local-only | Select-String '^curl$')) {
-#           Write-Host "Installing curl..."
-#           choco install curl -y
-#           if (-not (Get-Command curl -ErrorAction SilentlyContinue)) {
-#               Write-Error "curl installation failed. Exiting..."
-#               exit 1
-#           }
-#           Write-Host "curl installed successfully."
-#       }
-#       else {
-#           Write-Host "curl is already installed."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Setting up environment for Windows..."
-#       Write-Host "=============================="
-
-#       # Create a bin directory if it doesn't exist
-#       $binPath = "$env:USERPROFILE\bin"
-#       if (-not (Test-Path -Path $binPath)) {
-#           Write-Host "Creating bin directory at $binPath"
-#           New-Item -ItemType Directory -Path $binPath | Out-Null
-#       }
-#       else {
-#           Write-Host "bin directory already exists at $binPath"
-#       }
-
-#       # Add bin directory to PATH if not already present
-#       if (-not ($env:PATH -like "*$binPath*")) {
-#           Write-Host "Adding $binPath to PATH"
-#           [System.Environment]::SetEnvironmentVariable("PATH", "$binPath;$env:PATH", [System.EnvironmentVariableTarget]::User)
-#           $env:PATH = "$binPath;$env:PATH"
-#           Write-Host "PATH updated successfully."
-#       }
-#       else {
-#           Write-Host "PATH already includes $binPath"
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Downloading EDAMAME Posture binary for Windows..."
-#       Write-Host "=============================="
-
-#       # Define the binary name and download URL
-#       $edamameExe = "edamame_posture.exe"
-#       $edamameUrl = "https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe"
-
-#       # Download the binary if it doesn't exist
-#       if (-not (Test-Path -Path $edamameExe)) {
-#           Write-Host "Downloading $edamameExe from $edamameUrl..."
-#           try {
-#               Invoke-WebRequest -Uri $edamameUrl -OutFile $edamameExe -UseBasicParsing
-#               Write-Host "$edamameExe downloaded successfully."
-#           }
-#           catch {
-#               Write-Error "Failed to download $edamameExe. Exiting..."
-#               exit 1
-#           }
-#       }
-#       else {
-#           Write-Host "$edamameExe already exists."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Showing initial posture..."
-#       Write-Host "=============================="
-
-#       # Run the initial posture score
-#       try {
-#           .\$edamameExe score
-#           Write-Host "Initial posture score completed successfully."
-#       }
-#       catch {
-#           Write-Error "Failed to execute posture score. Exiting..."
-#           exit 1
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Auto-remediating posture issues if requested..."
-#       Write-Host "=============================="
-
-#       # Auto-remediation
-#       if ($env:AUTO_REMEDIATE -eq "true") {
-#           if ($env:SKIP_REMEDIATIONS -eq "false") {
-#               Write-Host "No remediations to skip."
-#               try {
-#                   .\$edamameExe remediate
-#                   Write-Host "Auto-remediation completed successfully."
-#               }
-#               catch {
-#                   Write-Error "Auto-remediation failed. Exiting..."
-#                   exit 1
-#               }
-#           }
-#           else {
-#               Write-Host "Skipping remediations: $env:SKIP_REMEDIATIONS"
-#               try {
-#                   .\$edamameExe remediate "$env:SKIP_REMEDIATIONS"
-#                   Write-Host "Selective auto-remediation completed successfully."
-#               }
-#               catch {
-#                   Write-Error "Selective auto-remediation failed. Exiting..."
-#                   exit 1
-#               }
-#           }
-#       }
-#       else {
-#           Write-Host "AUTO_REMEDIATE is set to false. Skipping remediation."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Starting EDAMAME Posture process and waiting for connection..."
-#       Write-Host "=============================="
-
-#       # Start the EDAMAME Posture process
-#       if ($env:EDAMAME_USER -and $env:EDAMAME_DOMAIN -and $env:EDAMAME_PIN -and $env:EDAMAME_ID) {
-#           $startCommand = ".\$edamameExe start `"$env:EDAMAME_USER`" `"$env:EDAMAME_DOMAIN`" `"$env:EDAMAME_PIN`" `"$env:EDAMAME_ID`" `"$env:NETWORK_SCAN`""
-
-#           if ($env:WHITELIST) {
-#               $startCommand += " `"$env:WHITELIST_windows`""
-#           }
-
-#           Write-Host "Executing: $startCommand"
-#           try {
-#               Invoke-Expression $startCommand
-#               Write-Host "EDAMAME Posture started successfully."
-#           }
-#           catch {
-#               Write-Error "Failed to start EDAMAME Posture. Exiting..."
-#               exit 1
-#           }
-
-#           # Wait for connection
-#           try {
-#               .\$edamameExe wait-for-connection
-#               Write-Host "Connection established successfully."
-#           }
-#           catch {
-#               Write-Error "Failed to establish connection. Exiting..."
-#               exit 1
-#           }
-#       }
-#       else {
-#           # Check for partial arguments
-#           if ($env:EDAMAME_USER -or $env:EDAMAME_DOMAIN -or $env:EDAMAME_PIN -or $env:EDAMAME_ID) {
-#               Write-Error "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID. Exiting..."
-#               exit 1
-#           }
-#           else {
-#               Write-Host "No EDAMAME arguments provided. Skipping start and wait steps."
-#           }
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Checking out the repository through Git CLI if requested..."
-#       Write-Host "=============================="
-
-#       # Repository Checkout with Retries
-#       $attempts = 0
-#       $maxAttempts = 20
-#       $timeout = $true
-
-#       for ($i = 1; $i -le $maxAttempts; $i++) {
-#           $attempts++
-#           Write-Host "Attempt ${attempts}: Checking out the repository through Git CLI..."
-
-#           try {
-#               git init
-#               git remote add origin "https://gitlab-ci-token:$env:CI_JOB_TOKEN@gitlab.com/$env:CI_PROJECT_PATH.git"
-#               git fetch --depth=1 origin "$env:CI_COMMIT_REF_NAME"
-#               git checkout -b "$env:CI_COMMIT_REF_NAME" FETCH_HEAD
-
-#               # Verify checkout
-#               $currentCommit = git rev-parse HEAD
-#               if ($currentCommit -eq $env:CI_COMMIT_SHA) {
-#                   Write-Host "Repository cloned and checked out successfully."
-#                   $timeout = $false
-#                   break
-#               }
-#               else {
-#                   Write-Warning "Checked out commit ($currentCommit) does not match expected SHA ($env:CI_COMMIT_SHA)."
-#               }
-#           }
-#           catch {
-#               Write-Warning "Checkout attempt $attempts failed. Retrying in 60 seconds..."
-#               Start-Sleep -Seconds 60
-#               Remove-Item -Recurse -Force .git
-#           }
-#       }
-
-#       # Calculate elapsed time
-#       $elapsed_time = $attempts * 60
-#       $elapsed_minutes = [math]::Floor($elapsed_time / 60)
-#       $elapsed_seconds = $elapsed_time % 60
-
-#       if ($timeout) {
-#           Write-Error "Timeout occurred while attempting to clone the repository."
-#           Write-Error "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-#           exit 1
-#       }
-#       else {
-#           Write-Host "Repository cloned successfully in ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-#           Write-Host "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
-#           Write-Host "Checked out commit: $(git rev-parse HEAD)"
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Checking if display_logs is enabled..."
-#       Write-Host "=============================="
-
-#       # Display Logs
-#       if ($env:DISPLAY_LOGS -eq "true") {
-#           try {
-#               .\$edamameExe logs
-#               Write-Host "Displayed logs successfully."
-#           }
-#           catch {
-#               Write-Warning "Failed to display logs."
-#           }
-#       }
-#       else {
-#           Write-Host "DISPLAY_LOGS is set to false. Skipping log display."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Checking if dump_sessions_log is enabled..."
-#       Write-Host "=============================="
-
-#       # Dump Sessions Log
-#       if ($env:DUMP_SESSIONS_LOG -eq "true") {
-#           Write-Host "Dumping sessions log is not supported on Windows."
-#           # If supported, uncomment and modify the following lines:
-#           # try {
-#           #     .\$edamameExe get-sessions
-#           #     Write-Host "Sessions log dumped successfully."
-#           # }
-#           # catch {
-#           #     if ($env:WHITELIST_CONFORMANCE -eq "true") {
-#           #         Write-Error "Failed to dump sessions log with WHITELIST_CONFORMANCE=true. Exiting..."
-#           #         exit 1
-#           #     }
-#           #     else {
-#           #         Write-Warning "Failed to dump sessions log."
-#           #     }
-#           # }
-#       }
-#       else {
-#           Write-Host "DUMP_SESSIONS_LOG is set to false. Skipping sessions log dump."
-#       }
-
-#       Write-Host "=============================="
-#       Write-Host "Windows setup for EDAMAME Posture completed successfully."
-#       Write-Host "=============================="
-
-#       # PowerShell Script Ends
-
-#   variables:
-#     AUTO_REMEDIATE: "false" # Set to "true" to enable auto-remediation
-#     SKIP_REMEDIATIONS: "false" # Specify remediations to skip if any
-#     NETWORK_SCAN: "false" # Set to "true" to enable network scanning
-#     DUMP_SESSIONS_LOG: "false" # Set to "true" to dump sessions log (if supported)
-#     DISPLAY_LOGS: "true" # Set to "true" to display logs
-#     WHITELIST: "github" # Specify whitelist (e.g., "github")
-#     WHITELIST_CONFORMANCE: "false" # Set to "true" to enforce whitelist conformance
-#     CHECKOUT: "false"
-#     CHECKOUT_SUBMODULES: "false"
-.setup_edamame_posture_windows:
+.setup_edamame_posture:
   stage: setup
-  before_script:
-    # Step 1: Check for bash.exe (Git Bash) and Install Git if Not Found
+  script:
+    # Step 1: Detect the Runner's OS
     - |
-      # Try to find bash.exe using Get-Command
-      $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
-      if ($bashCommand) {
-        $gitBashPath = $bashCommand.Source
-        Write-Output "Git Bash found at $gitBashPath."
-      } else {
-        # If bash.exe not found, proceed to install Git with Git Bash
-        Write-Output "Git Bash not found. Installing Git with Git Bash..."
-        
-        # Define Git installer URL (update version as needed)
-        $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.42.0.windows.1/Git-2.42.0-64-bit.exe"
-        $installerPath = "$env:TEMP\git-installer.exe"
-        
-        # Download Git installer
-        Invoke-WebRequest -Uri $gitInstallerUrl -OutFile $installerPath
-        
-        # Install Git silently with Git Bash component and add to PATH
-        Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART /COMPONENTS=""icons,ext\reg\shellhere,ext\reg\contextmenu,gitlfs,assoc,assoc_sh"" /TASKS=""!desktopicon,add_path"" /DIR=""C:\Program Files\Git""" -Wait
-        
-        # Remove installer after installation
-        Remove-Item $installerPath -Force
-        
-        Write-Output "Git installation completed."
-        
-        # Update PATH environment variable
-        $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
-        
-        # Verify Git Bash installation
-        $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
-        if ($bashCommand) {
-          $gitBashPath = $bashCommand.Source
-          Write-Output "Git Bash found at $gitBashPath."
-        } else {
-          Write-Output "Failed to install Git Bash."
-          exit 1
-        }
-      }
-
-    # Step 2: Update PATH and Verify Git installation
-    - |
-      # Ensure the new Git is in the PATH
-      $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
-      git --version
-
-    # Step 3: Create a Bash script with all your commands
-    - |
-      $bashScriptContent = @'
-      #!/bin/bash
-      set -e  # Exit immediately if a command exits with a non-zero status
-
-      # Your Bash script content goes here
-      echo "Running Bash script..."
-      if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
-        export CI_RUNNER_OS="macos"
-      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
-        export CI_RUNNER_OS="linux"
-      elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
+      echo "Determining the Runner's OS..."
+      if [ -n "$BASH_VERSION" ]; then
+        # We're in Bash shell (Linux or macOS)
+        if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
+          export CI_RUNNER_OS="macos"
+        elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+          export CI_RUNNER_OS="linux"
+        elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
+          export CI_RUNNER_OS="windows"
+        else
+          echo "Unable to determine Runner's OS from tags."
+          export CI_RUNNER_OS="unknown"
+        fi
+      elif [ -n "$OS" ] && [ "$OS" = "Windows_NT" ]; then
+        # We're on Windows
+        echo "Running on Windows."
         export CI_RUNNER_OS="windows"
       else
-        echo "Unable to determine Runner's OS from tags."
-        export CI_RUNNER_OS="unknown"
+        echo "Unsupported shell or OS."
+        exit 1
       fi
       echo "Detected Runner OS: $CI_RUNNER_OS"
 
-      # Conditional setup based on OS
-      if [[ "$CI_RUNNER_OS" == "linux" ]]; then
-        echo "Setting up environment for Linux..."
+    # Step 2: Execute OS-specific commands
+    - |
+      if [ "$CI_RUNNER_OS" = "windows" ]; then
+        # Windows commands (PowerShell)
+        echo "Executing Windows-specific setup..."
 
-        # Update package lists and install necessary packages
-        sudo apt-get update && sudo apt-get install -y git libpcap0.8 wget
+        # Ensure Git Bash is installed
+        powershell -Command "
+          \$bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
+          if (\$bashCommand) {
+            \$gitBashPath = \$bashCommand.Source
+            Write-Output 'Git Bash found at \$gitBashPath.'
+          } else {
+            Write-Output 'Git Bash not found. Installing Git with Git Bash...'
+            \$gitInstallerUrl = 'https://github.com/git-for-windows/git/releases/download/v2.42.0.windows.1/Git-2.42.0-64-bit.exe'
+            \$installerPath = \$env:TEMP + '\git-installer.exe'
+            Invoke-WebRequest -Uri \$gitInstallerUrl -OutFile \$installerPath
+            Start-Process -FilePath \$installerPath -Args '/VERYSILENT /NORESTART' -Wait
+            Remove-Item \$installerPath -Force
+            [Environment]::SetEnvironmentVariable('PATH', 'C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;' + \$env:PATH, 'Process')
+            \$bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
+            if (\$bashCommand) {
+              \$gitBashPath = \$bashCommand.Source
+              Write-Output 'Git Bash installed at \$gitBashPath.'
+            } else {
+              Write-Output 'Failed to install Git Bash.'
+              exit 1
+            }
+          }
+        "
 
-        # Create a custom sudo script and update PATH
-        mkdir -p ~/bin
-        echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
-        chmod +x ~/bin/sudo
-        echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
-        export PATH="$HOME/bin:$PATH"
+        # Create the Bash script content
+        powershell -Command "
+          \$bashScriptContent = @'
+          #!/bin/bash
+          set -e
 
-        echo "Linux environment setup complete."
-      elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
-        echo "No additional setup required for $CI_RUNNER_OS."
+          echo 'Determining the Runner''s OS based on tags...'
+          if [[ \"\$CI_RUNNER_TAGS\" =~ macos ]]; then
+            export CI_RUNNER_OS=\"macos\"
+          elif [[ \"\$CI_RUNNER_TAGS\" =~ linux ]]; then
+            export CI_RUNNER_OS=\"linux\"
+          elif [[ \"\$CI_RUNNER_TAGS\" =~ windows ]]; then
+            export CI_RUNNER_OS=\"windows\"
+          else
+            echo 'Unable to determine Runner''s OS from tags.'
+            export CI_RUNNER_OS=\"unknown\"
+          fi
+          echo 'Detected Runner OS: '\$CI_RUNNER_OS
+
+          # Conditional setup based on OS
+          if [[ \"\$CI_RUNNER_OS\" == \"linux\" ]]; then
+            echo 'Setting up environment for Linux...'
+
+            # Update package lists and install necessary packages
+            sudo apt-get update && sudo apt-get install -y git libpcap0.8 wget
+
+            # Create a custom sudo script and update PATH
+            mkdir -p ~/bin
+            echo -e '#!/bin/bash\n\"\$@\"' > ~/bin/sudo
+            chmod +x ~/bin/sudo
+            echo 'export PATH=\"\$HOME/bin:\$PATH\"' | tee -a ~/.bashrc ~/.profile >/dev/null
+            export PATH=\"\$HOME/bin:\$PATH\"
+
+            echo 'Linux environment setup complete.'
+          elif [[ \"\$CI_RUNNER_OS\" == \"windows\" || \"\$CI_RUNNER_OS\" == \"macos\" ]]; then
+            echo 'No additional setup required for '\$CI_RUNNER_OS
+          else
+            echo 'Unsupported OS: '\$CI_RUNNER_OS'. Exiting...'
+            exit 1
+          fi
+
+          # Download EDAMAME Posture binary based on OS
+          echo 'Downloading EDAMAME Posture binary based on OS...'
+          echo 'OS: '\$CI_RUNNER_OS
+          case \"\$CI_RUNNER_OS\" in
+            \"linux\")
+              if [[ ! -f edamame_posture ]]; then
+                wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+                chmod +x edamame_posture
+              fi
+              ;;
+            \"macos\")
+              if [[ ! -f edamame_posture ]]; then
+                wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
+                chmod +x edamame_posture
+              fi
+              ;;
+            \"windows\")
+              if [[ ! -f edamame_posture.exe ]]; then
+                wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
+              fi
+              ;;
+            *)
+              echo 'Unsupported OS: '\$CI_RUNNER_OS
+              exit 1
+              ;;
+          esac
+
+          # Show initial posture
+          echo 'Showing initial posture...'
+          if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+            ./edamame_posture.exe score
+          else
+            sudo ./edamame_posture score
+          fi
+
+          # Auto-remediate posture issues if requested
+          echo 'Auto-remediating posture issues if requested...'
+          if [[ \"\$AUTO_REMEDIATE\" == \"true\" ]]; then
+            if [[ -z \"\$SKIP_REMEDIATIONS\" ]]; then
+              echo 'No remediations to skip.'
+              if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+                ./edamame_posture.exe remediate
+              else
+                sudo ./edamame_posture remediate
+              fi
+            else
+              echo 'Skipping remediations: '\$SKIP_REMEDIATIONS
+              if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+                ./edamame_posture.exe remediate \"\$SKIP_REMEDIATIONS\"
+              else
+                sudo ./edamame_posture remediate \"\$SKIP_REMEDIATIONS\"
+              fi
+            fi
+          fi
+
+          # Start EDAMAME Posture process and wait for connection
+          echo 'Starting EDAMAME Posture process and waiting for connection...'
+          if [[ -n \"\$EDAMAME_USER\" && -n \"\$EDAMAME_DOMAIN\" && -n \"\$EDAMAME_PIN\" && -n \"\$EDAMAME_ID\" ]]; then
+            if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+              if [[ -n \"\$WHITELIST\" ]]; then
+                ./edamame_posture.exe start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\" \"\${WHITELIST}_windows\"
+              else
+                ./edamame_posture.exe start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\"
+              fi
+              ./edamame_posture.exe wait-for-connection
+            else
+              if [[ \"\$CI_RUNNER_OS\" == \"macos\" ]]; then
+                if [[ -n \"\$WHITELIST\" ]]; then
+                  sudo ./edamame_posture start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\" \"\${WHITELIST}_macos\"
+                else
+                  sudo ./edamame_posture start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\"
+                fi
+                sudo ./edamame_posture wait-for-connection
+              elif [[ \"\$CI_RUNNER_OS\" == \"linux\" ]]; then
+                if [[ -n \"\$WHITELIST\" ]]; then
+                  sudo ./edamame_posture start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\" \"\${WHITELIST}_ubuntu\"
+                else
+                  sudo ./edamame_posture start \"\$EDAMAME_USER\" \"\$EDAMAME_DOMAIN\" \"\$EDAMAME_PIN\" \"\$EDAMAME_ID\" \"\$NETWORK_SCAN\"
+                fi
+                sudo ./edamame_posture wait-for-connection
+              fi
+            fi
+          else
+            if [[ -n \"\$EDAMAME_USER\$EDAMAME_DOMAIN\$EDAMAME_PIN\$EDAMAME_ID\" ]]; then
+              echo 'Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID'
+              exit 1
+            fi
+          fi
+
+          # Checkout the repo through the git CLI if requested
+          echo 'Checkout the repo through the git CLI if requested'
+          attempts=0
+          timeout=true
+
+          for i in {1..20}; do
+            attempts=\$((attempts + 1))
+            echo 'Attempt '\$attempts': Checking out the repo through the Git CLI...'
+            if git init && \
+               git remote add origin https://gitlab-ci-token:\${CI_JOB_TOKEN}@gitlab.com/\${CI_PROJECT_PATH}.git && \
+               git fetch --depth=1 origin \"\$CI_COMMIT_REF_NAME\"; then
+              if git checkout -b \"\$CI_COMMIT_REF_NAME\" FETCH_HEAD; then
+                timeout=false
+                break
+              fi
+            else
+              echo 'Checkout failed. Waiting for 60 seconds before retrying...'
+              sleep 60
+              rm -rf .git
+            fi
+          done
+
+          elapsed_time=\$((attempts * 60))
+          elapsed_minutes=\$((elapsed_time / 60))
+          elapsed_seconds=\$((elapsed_time % 60))
+
+          if [ \"\$timeout\" = true ]; then
+            echo 'Timeout occurred while attempting to clone the repository.'
+            echo 'Total time: '\${elapsed_minutes}' minutes and '\${elapsed_seconds}' seconds.'
+            exit 1
+          else
+            echo 'Repository cloned successfully.'
+            echo 'Time taken: '\${elapsed_minutes}' minutes and '\${elapsed_seconds}' seconds.'
+            echo 'Checked out branch: ' \$(git rev-parse --abbrev-ref HEAD)
+            echo 'Checked out commit: ' \$(git rev-parse HEAD)
+            if [ \"\$(git rev-parse HEAD)\" != \"\$CI_COMMIT_SHA\" ]; then
+              echo 'Warning: The checked out commit does not match the expected SHA.'
+              echo 'Expected: '\$CI_COMMIT_SHA
+              echo 'Actual: ' \$(git rev-parse HEAD)
+            fi
+          fi
+
+          # Display logs if enabled
+          echo 'Checking if display_logs is enabled...'
+          if [[ \"\$DISPLAY_LOGS\" == \"true\" ]]; then
+            if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+              ./edamame_posture.exe logs
+            else
+              sudo ./edamame_posture logs
+            fi
+          fi
+
+          # Dump sessions log if enabled
+          echo 'Checking if dump_sessions_log is enabled...'
+          if [[ \"\$DUMP_SESSIONS_LOG\" == \"true\" ]]; then
+            if [[ \"\$CI_RUNNER_OS\" == \"windows\" ]]; then
+              echo 'Dumping sessions log is not supported on Windows.'
+            else
+              sudo ./edamame_posture get-sessions || if [[ \"\$WHITELIST_CONFORMANCE\" == \"true\" ]]; then exit 1; fi
+            fi
+          fi
+          '@
+
+          # Save the Bash script to a temporary file without BOM
+          \$bashScriptPath = \$env:TEMP + '\setup_edamame_posture.sh'
+          Set-Content -Path \$bashScriptPath -Value \$bashScriptContent -Encoding Ascii
+
+          # Function to convert Windows path to Unix path
+          function ConvertTo-UnixPath(\$winPath) {
+              # Replace backslashes with forward slashes
+              \$unixPath = \$winPath -replace '\\\\', '/'
+              # Extract drive letter
+              if (\$unixPath -match '^([A-Za-z]):(.*)') {
+                  \$driveLetter = \$matches[1].ToLower()
+                  \$pathAfterDrive = \$matches[2]
+                  # Prepend /driveletter to the path
+                  \$unixPath = \"/\$driveLetter\$pathAfterDrive\"
+              }
+              return \$unixPath
+          }
+
+          # Convert the Windows path to Unix path
+          \$unixBashScriptPath = ConvertTo-UnixPath \$bashScriptPath
+          Write-Output \"Unix-style script path: \$unixBashScriptPath\"
+
+          # Execute the Bash script using Git Bash
+          & '\$gitBashPath' -c \"bash \$unixBashScriptPath\"
+        "
+
+      elif [ "$CI_RUNNER_OS" = "linux" ] || [ "$CI_RUNNER_OS" = "macos" ]; then
+        # Unix-like OS commands (Bash)
+        echo "Executing Unix-like OS-specific script..."
+
+        # Start of your script
+        echo "Determining the Runner's OS based on tags..."
+        if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
+          export CI_RUNNER_OS="macos"
+        elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+          export CI_RUNNER_OS="linux"
+        else
+          echo "Unable to determine Runner's OS from tags."
+          export CI_RUNNER_OS="unknown"
+        fi
+        echo "Detected Runner OS: $CI_RUNNER_OS"
+
+        # Conditional commands based on detected OS
+        if [[ "$CI_RUNNER_OS" == "linux" ]]; then
+          echo "Setting up environment for Linux..."
+
+          # Update package lists and install necessary packages
+          sudo apt-get update && sudo apt-get install -y git libpcap0.8 wget
+
+          # Create a custom sudo script and update PATH
+          mkdir -p ~/bin
+          echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+          chmod +x ~/bin/sudo
+          echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
+          export PATH="$HOME/bin:$PATH"
+
+          echo "Linux environment setup complete."
+        elif [[ "$CI_RUNNER_OS" == "macos" ]]; then
+          echo "No additional setup required for macOS."
+        else
+          echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
+          exit 1
+        fi
+
+        # The rest of your Bash script
+        echo "Downloading EDAMAME Posture binary based on OS..."
+        echo "OS: $CI_RUNNER_OS"
+        case "$CI_RUNNER_OS" in
+          "linux")
+            if [[ ! -f edamame_posture ]]; then
+              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+              chmod +x edamame_posture
+            fi
+            ;;
+          "macos")
+            if [[ ! -f edamame_posture ]]; then
+              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
+              chmod +x edamame_posture
+            fi
+            ;;
+          *)
+            echo "Unsupported OS: $CI_RUNNER_OS"
+            exit 1
+            ;;
+        esac
+
+        # Show initial posture
+        echo "Showing initial posture..."
+        sudo ./edamame_posture score
+
+        # Auto-remediate posture issues if requested
+        echo "Auto-remediating posture issues if requested..."
+        if [[ "$AUTO_REMEDIATE" == "true" ]]; then
+          if [[ -z "$SKIP_REMEDIATIONS" ]]; then
+            echo "No remediations to skip."
+            sudo ./edamame_posture remediate
+          else
+            echo "Skipping remediations: $SKIP_REMEDIATIONS"
+            sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
+          fi
+        fi
+
+        # Start EDAMAME Posture process and wait for connection
+        echo "Starting EDAMAME Posture process and waiting for connection..."
+        if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
+          if [[ -n "$WHITELIST" ]]; then
+            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_$(echo $CI_RUNNER_OS)"
+          else
+            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+          fi
+          sudo ./edamame_posture wait-for-connection
+        else
+          if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
+            echo "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID"
+            exit 1
+          fi
+        fi
+
+        # Checkout the repo through the git CLI if requested
+        echo 'Checkout the repo through the git CLI if requested'
+        attempts=0
+        timeout=true
+
+        for i in {1..20}; do
+          attempts=$((attempts + 1))
+          echo "Attempt $attempts: Checking out the repo through the Git CLI..."
+          if git init && \
+             git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git && \
+             git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
+            if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
+              timeout=false
+              break
+            fi
+          else
+            echo "Checkout failed. Waiting for 60 seconds before retrying..."
+            sleep 60
+            rm -rf .git
+          fi
+        done
+
+        elapsed_time=$((attempts * 60))
+        elapsed_minutes=$((elapsed_time / 60))
+        elapsed_seconds=$((elapsed_time % 60))
+
+        if [ "$timeout" = true ]; then
+          echo "Timeout occurred while attempting to clone the repository."
+          echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+          exit 1
+        else
+          echo "Repository cloned successfully."
+          echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+          echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Checked out commit: $(git rev-parse HEAD)"
+          if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
+            echo "Warning: The checked out commit does not match the expected SHA."
+            echo "Expected: $CI_COMMIT_SHA"
+            echo "Actual: $(git rev-parse HEAD)"
+          fi
+        fi
+
+        # Display logs if enabled
+        echo "Checking if display_logs is enabled..."
+        if [[ "$DISPLAY_LOGS" == "true" ]]; then
+          sudo ./edamame_posture logs
+        fi
+
+        # Dump sessions log if enabled
+        echo "Checking if dump_sessions_log is enabled..."
+        if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
+          sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+        fi
+
       else
         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
         exit 1
       fi
-
-      # Download EDAMAME Posture binary based on OS
-      echo "Downloading EDAMAME Posture binary based on OS..."
-      echo "OS: $CI_RUNNER_OS"
-      case "$CI_RUNNER_OS" in
-        "linux")
-          if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
-            chmod +x edamame_posture
-          fi
-          ;;
-        "macos")
-          if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
-            chmod +x edamame_posture
-          fi
-          ;;
-        "windows")
-          if [[ ! -f edamame_posture.exe ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
-          fi
-          ;;
-        *)
-          echo "Unsupported OS: $CI_RUNNER_OS"
-          exit 1
-          ;;
-      esac
-
-      # Show initial posture
-      echo "Showing initial posture..."
-      if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-        ./edamame_posture.exe score
-      else
-        sudo ./edamame_posture score
-      fi
-
-      # Auto-remediate posture issues if requested
-      echo "Auto-remediating posture issues if requested..."
-      if [[ "$AUTO_REMEDIATE" == "true" ]]; then
-        if [[ -z "$SKIP_REMEDIATIONS" ]]; then
-          echo "No remediations to skip."
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate
-          else
-            sudo ./edamame_posture remediate
-          fi
-        else
-          echo "Skipping remediations: $SKIP_REMEDIATIONS"
-          if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-            ./edamame_posture.exe remediate "$SKIP_REMEDIATIONS"
-          else
-            sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
-          fi
-        fi
-      fi
-
-      # Start EDAMAME Posture process and wait for connection
-      echo "Starting EDAMAME Posture process and waiting for connection..."
-      if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          if [[ -n "$WHITELIST" ]]; then
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_windows"
-          else
-            ./edamame_posture.exe start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-          fi
-          ./edamame_posture.exe wait-for-connection
-        else
-          if [[ "$CI_RUNNER_OS" == "macos" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
-            else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          elif [[ "$CI_RUNNER_OS" == "linux" ]]; then
-            if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
-            else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
-            fi
-            sudo ./edamame_posture wait-for-connection
-          fi
-        fi
-      else
-        if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
-          echo "Please provide all required arguments: EDAMAME_USER, EDAMAME_DOMAIN, EDAMAME_PIN, EDAMAME_ID"
-          exit 1
-        fi
-      fi
-
-      # Checkout the repo through the git CLI if requested
-      echo 'Checkout the repo through the git CLI if requested'
-      attempts=0
-      timeout=true
-
-      for i in {1..20}; do
-        attempts=$((attempts + 1))
-        echo "Attempt $attempts: Checking out the repo through the Git CLI..."
-        if git init && \
-           git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git && \
-           git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
-          if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
-            timeout=false
-            break
-          fi
-        else
-          echo "Checkout failed. Waiting for 60 seconds before retrying..."
-          sleep 60
-          rm -rf .git
-        fi
-      done
-
-      elapsed_time=$((attempts * 60))
-      elapsed_minutes=$((elapsed_time / 60))
-      elapsed_seconds=$((elapsed_time % 60))
-
-      if [ "$timeout" = true ]; then
-        echo "Timeout occurred while attempting to clone the repository."
-        echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        exit 1
-      else
-        echo "Repository cloned successfully."
-        echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
-        echo "Checked out commit: $(git rev-parse HEAD)"
-        if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
-          echo "Warning: The checked out commit does not match the expected SHA."
-          echo "Expected: $CI_COMMIT_SHA"
-          echo "Actual: $(git rev-parse HEAD)"
-        fi
-      fi
-
-      # Display logs if enabled
-      echo "Checking if display_logs is enabled..."
-      if [[ "$DISPLAY_LOGS" == "true" ]]; then
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          ./edamame_posture.exe logs
-        else
-          sudo ./edamame_posture logs
-        fi
-      fi
-
-      # Dump sessions log if enabled
-      echo "Checking if dump_sessions_log is enabled..."
-      if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
-        if [[ "$CI_RUNNER_OS" == "windows" ]]; then
-          echo "Dumping sessions log is not supported on Windows."
-        else
-          sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
-        fi
-      fi
-      '@
-
-      # Save the Bash script to a temporary file without BOM
-      $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
-      Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding Ascii
-
-      # Function to convert Windows path to Unix path
-      function ConvertTo-UnixPath($winPath) {
-          # Replace backslashes with forward slashes
-          $unixPath = $winPath -replace '\\', '/'
-          # Extract drive letter
-          if ($unixPath -match '^([A-Za-z]):(.*)') {
-              $driveLetter = $matches[1].ToLower()
-              $pathAfterDrive = $matches[2]
-              # Prepend /driveletter to the path
-              $unixPath = "/$driveLetter$pathAfterDrive"
-          }
-          return $unixPath
-      }
-
-      # Convert the Windows path to Unix path
-      $unixBashScriptPath = ConvertTo-UnixPath $bashScriptPath
-      Write-Output "Unix-style script path: $unixBashScriptPath"
-
-    # Step 4: Execute the Bash script using Git Bash
-    - |
-      & "$gitBashPath" -c "bash $unixBashScriptPath"
 
   variables:
     AUTO_REMEDIATE: "false"
