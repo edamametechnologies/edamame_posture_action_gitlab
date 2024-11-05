@@ -487,9 +487,10 @@
 #     DISPLAY_LOGS: "true"
 #     WHITELIST: "github"
 #     WHITELIST_CONFORMANCE: "false"
+
 .setup_edamame_posture:
   stage: setup
-  before_script:
+  script:
     # Step 1: Detect the Runner's OS
     - |
       echo "Determining the Runner's OS..."
