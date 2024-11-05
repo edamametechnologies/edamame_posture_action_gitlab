@@ -58,9 +58,22 @@
       $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
       Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding UTF8
 
+      # Function to convert Windows path to Unix path
+      function ConvertTo-UnixPath($winPath) {
+          # Replace backslashes with forward slashes
+          $unixPath = $winPath -replace '\\','/'
+          # Replace drive letter (e.g., C:) with /c
+          $unixPath = $unixPath -replace '^([A-Za-z]):', '/$($matches[1].ToLower())'
+          return $unixPath
+      }
+
+      # Convert the Windows path to Unix path
+      $unixBashScriptPath = ConvertTo-UnixPath $bashScriptPath
+      Write-Output "Unix-style script path: $unixBashScriptPath"
+
     # Step 4: Execute the Bash script using Git Bash
     - |
-      & "$gitBashPath" -c "bash $env:TEMP/setup_edamame_posture.sh"
+      & "$gitBashPath" -c "bash $unixBashScriptPath"
 
   variables:
     AUTO_REMEDIATE: "false"
