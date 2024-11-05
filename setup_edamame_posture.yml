@@ -90,7 +90,13 @@
         else
           sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
         fi
+        echo "Waiting for connection..."
         sudo ./edamame_posture wait-for-connection
+        echo "Showing posture after connection..."
+        cat ~/.edamame_posture.yaml
+        echo "Showing status..."
+        sudo ./edamame_posture status
+        echo "Sleeping for 80 seconds..."
         sleep 80
       else
         # Check if only a partial set of mandatory arguments is provided
