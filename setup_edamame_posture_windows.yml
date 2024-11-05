@@ -41,8 +41,11 @@
         }
       }
 
-    # Step 2: Verify Git installation
-    - git --version
+    # Step 2: Update PATH and Verify Git installation
+    - |
+      # Ensure the new Git is in the PATH
+      $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
+      git --version
 
     # Step 3: Create a Bash script with all your commands
     - |
@@ -62,10 +65,12 @@
       function ConvertTo-UnixPath($winPath) {
           # Replace backslashes with forward slashes
           $unixPath = $winPath -replace '\\', '/'
-          # Replace drive letter (e.g., C:) with /c
-          $unixPath = $unixPath -replace '^([A-Za-z]):', {
-              param($driveLetter)
-              '/'+$driveLetter[0].ToLower()
+          # Extract drive letter
+          if ($unixPath -match '^([A-Za-z]):(.*)') {
+              $driveLetter = $matches[1].ToLower()
+              $pathAfterDrive = $matches[2]
+              # Prepend /driveletter to the path
+              $unixPath = "/$driveLetter$pathAfterDrive"
           }
           return $unixPath
       }
