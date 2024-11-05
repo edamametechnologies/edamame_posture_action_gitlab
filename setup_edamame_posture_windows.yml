@@ -1,63 +1,50 @@
 .setup_edamame_posture_windows:
   stage: setup
   before_script:
-    # Step 1: Install Git if not already installed (Windows Only)
+    # Step 1: Check for bash.exe (Git Bash) and Install Git if Not Found
     - |
-      if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Output "Git not found. Installing Git..."
-
-        # Define Git installer URL (update version as needed)
-        $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.40.0.windows.1/Git-2.40.0-64-bit.exe"
-        $installerPath = "$env:TEMP\git-installer.exe"
-
-        # Download Git installer
-        Invoke-WebRequest -Uri $gitInstallerUrl -OutFile $installerPath
-
-        # Install Git silently with Git Bash component and update PATH
-        Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART /COMPONENTS=gitbash,ext\regshell /TASKS=!desktopicon /DIR=""C:\Program Files\Git""" -Wait
-
-        # Remove installer after installation
-        Remove-Item $installerPath -Force
-
-        Write-Output "Git installation completed."
-      } else {
-        Write-Output "Git is already installed."
-      }
-
-    # Step 2: Verify Git installation
-    - git --version
-
-    # Step 3: Define Git Bash path (Windows Only)
-    - |
-      # Try to find bash.exe dynamically
+      # Try to find bash.exe using Get-Command
       $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
       if ($bashCommand) {
         $gitBashPath = $bashCommand.Source
         Write-Output "Git Bash found at $gitBashPath."
       } else {
-        # If not found in PATH, search common installation directories
-        $possiblePaths = @(
-          "C:\Program Files\Git\bin\bash.exe",
-          "C:\Program Files (x86)\Git\bin\bash.exe",
-          "$env:ProgramFiles\Git\bin\bash.exe",
-          "$env:ProgramFiles(x86)\Git\bin\bash.exe"
-        )
-
-        foreach ($path in $possiblePaths) {
-          if (Test-Path $path) {
-            $gitBashPath = $path
-            Write-Output "Git Bash found at $gitBashPath."
-            break
-          }
-        }
-
-        if (-not $gitBashPath) {
-          Write-Output "Git Bash not found in known locations."
+        # If bash.exe not found, proceed to install Git with Git Bash
+        Write-Output "Git Bash not found. Installing Git with Git Bash..."
+        
+        # Define Git installer URL (update version as needed)
+        $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.42.0.windows.1/Git-2.42.0-64-bit.exe"
+        $installerPath = "$env:TEMP\git-installer.exe"
+        
+        # Download Git installer
+        Invoke-WebRequest -Uri $gitInstallerUrl -OutFile $installerPath
+        
+        # Install Git silently with Git Bash component and add to PATH
+        Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART /COMPONENTS=""icons,ext\reg\shellhere,ext\reg\contextmenu,gitlfs,assoc,assoc_sh"" /TASKS=""!desktopicon,add_path"" /DIR=""C:\Program Files\Git""" -Wait
+        
+        # Remove installer after installation
+        Remove-Item $installerPath -Force
+        
+        Write-Output "Git installation completed."
+        
+        # Update PATH environment variable
+        $env:PATH += ";C:\Program Files\Git\bin;C:\Program Files\Git\usr\bin"
+        
+        # Verify Git Bash installation
+        $bashCommand = Get-Command bash.exe -ErrorAction SilentlyContinue
+        if ($bashCommand) {
+          $gitBashPath = $bashCommand.Source
+          Write-Output "Git Bash found at $gitBashPath."
+        } else {
+          Write-Output "Failed to install Git Bash."
           exit 1
         }
       }
 
-    # Step 4: Create a Bash script with all your commands
+    # Step 2: Verify Git installation
+    - git --version
+
+    # Step 3: Create a Bash script with all your commands
     - |
       $bashScriptContent = @'
       #!/bin/bash
@@ -71,7 +58,7 @@
       $bashScriptPath = "$env:TEMP\setup_edamame_posture.sh"
       Set-Content -Path $bashScriptPath -Value $bashScriptContent -Encoding UTF8
 
-    # Step 5: Execute the Bash script using Git Bash
+    # Step 4: Execute the Bash script using Git Bash
     - |
       & "$gitBashPath" -c "bash $env:TEMP/setup_edamame_posture.sh"
 
