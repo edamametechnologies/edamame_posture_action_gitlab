@@ -1,41 +1,8 @@
 # setup_edamame_posture_windows.yml
 .setup_edamame_posture_windows:
   script:
-    - echo "Setting up EDAMAME Posture on Windows..."
-    - |
-      if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-        Write-Output "Git not found. Installing Git..."
-        # Define Git installer URL (update version as needed)
-        $gitInstallerUrl = "https://github.com/git-for-windows/git/releases/download/v2.40.0.windows.1/Git-2.40.0-64-bit.exe"
-        $installerPath = "$env:TEMP\git-installer.exe"
-
-        # Download Git installer
-        Invoke-WebRequest -Uri $gitInstallerUrl -OutFile $installerPath
-
-        # Install Git silently
-        Start-Process -FilePath $installerPath -Args "/VERYSILENT /NORESTART" -Wait
-
-        # Remove installer after installation
-        Remove-Item $installerPath -Force
-
-        Write-Output "Git installation completed."
-      } else {
-        Write-Output "Git is already installed."
-      }
-
-    - git --version
-    - |
-      $gitBashPath = "C:\Program Files\Git\bin\bash.exe"
-      if (Test-Path $gitBashPath) {
-        Write-Output "Git Bash found at $gitBashPath."
-      } else {
-        Write-Output "Git Bash not found at $gitBashPath."
-        exit 1
-      }
-    # Export gitBashPath for child jobs
-    - |
-      echo "export gitBashPath='$gitBashPath'" >> $Env:GITHUB_ENV
-
+    # toto2
+    - echo "toto"
 # .setup_edamame_posture_windows:
 #   stage: setup
 #   script:
