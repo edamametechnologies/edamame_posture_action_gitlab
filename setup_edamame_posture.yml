@@ -108,6 +108,7 @@
       cd
       echo "Showing initial posture..."
       ls -l
+      file ./edamame_posture
       pwd
       sudo ./edamame_posture score
 
