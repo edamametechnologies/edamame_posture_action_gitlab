@@ -85,7 +85,7 @@
       # Check if all arguments are provided
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
         if [[ -n "$WHITELIST" ]]; then
-          EDAMAME_LOG_LEVEL=debug sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
+          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
         else
           sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
         fi
