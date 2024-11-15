@@ -13,7 +13,7 @@
         echo "Unable to determine Runner's OS from tags."
         export CI_RUNNER_OS="unknown"
       fi
-      echo "Detected Runner OS: $CI_RUNNER_OS"
+      echo "Detected Runnerr OS: $CI_RUNNER_OS"
       # Conditional commands based on detected OS
     - |
       if [[ "$CI_RUNNER_OS" == "linux" ]]; then
