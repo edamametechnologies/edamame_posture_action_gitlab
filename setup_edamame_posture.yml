@@ -75,6 +75,7 @@
         exit 1
       fi
     - |
+      cd
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
@@ -102,10 +103,12 @@
       esac
 
     - |
+      cd
       echo "Showing initial posture..."
       sudo ./edamame_posture score
 
     - |
+      cd
       echo "Auto-remediating posture issues if requested..."
       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
         if [[ -z "$SKIP_REMEDIATIONS" ]]; then
@@ -185,12 +188,14 @@
       fi
 
     - |
+      cd
       echo "Checking if display_logs is enabled..."
       if [[ "$DISPLAY_LOGS" == "true" ]]; then
         sudo ./edamame_posture logs
       fi
 
     - |
+      cd
       echo "Checking if dump_sessions_log is enabled..."
       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
         sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
