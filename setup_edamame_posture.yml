@@ -2,6 +2,7 @@
   before_script:
     - |
       echo "Determining the Runner's OS based on tags..."
+      echo "Runner tags: $CI_RUNNER_TAGS"
       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
         export CI_RUNNER_OS="macos"
       elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
