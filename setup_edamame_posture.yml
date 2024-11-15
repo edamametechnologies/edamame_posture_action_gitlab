@@ -83,6 +83,8 @@
           if [[ ! -f edamame_posture ]]; then
             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
             chmod +x edamame_posture
+            ls
+            pwd
           fi
           ;;
         "macos")
@@ -105,6 +107,8 @@
     - |
       cd
       echo "Showing initial posture..."
+      ls
+      pwd
       sudo ./edamame_posture score
 
     - |
