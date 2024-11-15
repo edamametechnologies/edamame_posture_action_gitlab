@@ -1,5 +1,5 @@
 .setup_edamame_posture:
-  script:
+  before_script:
     - |
       echo "Determining the Runner's OS based on tags..."
       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
