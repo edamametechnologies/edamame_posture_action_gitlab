@@ -1,28 +1,64 @@
 .setup_edamame_posture:
   before_script:
     - |
-      echo "Determining the Runner's OS based on tags..."
+      echo "Determining the Runner's OS and package manager..."
       echo "Runner tags: $CI_RUNNER_TAGS"
       echo "OS release information:"
       cat /etc/os-release
+
+      # Default to unknown
+      export CI_RUNNER_OS="unknown"
+      export PACKAGE_MANAGER="unknown"
+
+      # Determine the Runner's OS
       if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
-        export CI_RUNNER_OS="macos"
-      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
-        export CI_RUNNER_OS="linux"
+        CI_RUNNER_OS="macos"
       elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
-        export CI_RUNNER_OS="windows"
+        CI_RUNNER_OS="windows"
+      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+        CI_RUNNER_OS="linux"
+
+        # Detect the package manager
+        if command -v apt-get >/dev/null; then
+          PACKAGE_MANAGER="apt-get"
+        elif command -v yum >/dev/null; then
+          PACKAGE_MANAGER="yum"
+        elif command -v apk >/dev/null; then
+          PACKAGE_MANAGER="apk"
+        elif command -v dnf >/dev/null; then
+          PACKAGE_MANAGER="dnf"
+        else
+          echo "No supported package manager found."
+          exit 1
+        fi
       else
         echo "Unable to determine Runner's OS from tags."
-        export CI_RUNNER_OS="unknown"
       fi
-      echo "Detected Runnerr OS: $CI_RUNNER_OS"
-      # Conditional commands based on detected OS
+
+      echo "Detected Runner OS: $CI_RUNNER_OS"
+      echo "Detected Package Manager: $PACKAGE_MANAGER"
+
     - |
       if [[ "$CI_RUNNER_OS" == "linux" ]]; then
         echo "Setting up environment for Linux..."
 
-        # Update package lists and install necessary packages
-        apt-get update && apt-get install -y git libpcap0.8 wget
+        # Install necessary packages based on the package manager
+        if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
+          echo "Using apt-get"
+          apt-get update && apt-get install -y git libpcap0.8 wget
+        elif [[ "$PACKAGE_MANAGER" == "yum" ]]; then
+          echo "Using yum"
+          yum install -y git libpcap wget
+        elif [[ "$PACKAGE_MANAGER" == "dnf" ]]; then
+          echo "Using dnf"
+          dnf install -y git libpcap wget
+        elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+          echo "Using apk"
+          apk update && apk add git libpcap wget
+        else
+          echo "Unsupported package manager: $PACKAGE_MANAGER"
+          exit 1
+        fi
 
         # Create a custom sudo script and update PATH
         mkdir -p ~/bin
@@ -34,12 +70,10 @@
         echo "Linux environment setup complete."
       elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
         echo "No additional setup required for $CI_RUNNER_OS."
-
       else
         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
         exit 1
       fi
-
     - |
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
