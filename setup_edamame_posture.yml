@@ -54,7 +54,7 @@
           dnf install -y git libpcap wget
         elif [[ "$PACKAGE_MANAGER" == "apk" ]]; then
           echo "Using apk"
-          apk update && apk add git libpcap wget sudo
+          apk update && apk add git libpcap wget sudo eudev
         else
           echo "Unsupported package manager: $PACKAGE_MANAGER"
           exit 1
