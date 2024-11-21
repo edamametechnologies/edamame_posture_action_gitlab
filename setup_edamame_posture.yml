@@ -87,8 +87,8 @@
               wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
             else
               wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
-              chmod +x edamame_posture
             fi
+            chmod +x edamame_posture
           fi
           ;;
         "macos")
