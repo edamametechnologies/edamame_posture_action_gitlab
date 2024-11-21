@@ -81,10 +81,14 @@
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
-            chmod +x edamame_posture
-            ls -l
-            pwd
+            # If package manager is apk that's mean we are using alpine
+            if [[ "$PACKAGE_MANAGER" == "apk" ]]; then
+              echo "Using Alpine Linux"
+              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
+            else
+              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+              chmod +x edamame_posture
+            fi
           fi
           ;;
         "macos")
@@ -156,12 +160,12 @@
       attempts=0
       timeout=true
 
+      git init || true
+      git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
       for i in {1..20}; do
         attempts=$((attempts + 1))
         echo "Attempt $attempts: Checking out the repo through the Git CLI..."
-        if git init && \
-           git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git && \
-           git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
+        if git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
           if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
             timeout=false
             break
@@ -169,7 +173,6 @@
         else
           echo "Checkout failed. Waiting for 60 seconds before retrying..."
           sleep 60
-          rm -rf .git
         fi
       done
 
