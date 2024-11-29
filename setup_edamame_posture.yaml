@@ -129,6 +129,12 @@
     - |
       echo "Starting EDAMAME Posture process and waiting for connection..."
       # Check if all arguments are provided
+      echo "EDAMAME_USER: $EDAMAME_USER"
+      echo "EDAMAME_DOMAIN: $EDAMAME_DOMAIN"
+      echo "EDAMAME_PIN: $EDAMAME_PIN"
+      echo "EDAMAME_ID: $EDAMAME_ID"
+      echo "NETWORK_SCAN: $NETWORK_SCAN"
+      echo "WHITELIST: $WHITELIST"
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
         if [[ -n "$WHITELIST" ]]; then
           sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
