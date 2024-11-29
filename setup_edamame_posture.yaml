@@ -165,6 +165,7 @@ variables:
 
     - |
       echo 'Checkout the repo through the git CLI if requested'
+      cd "$CI_PROJECT_DIR"
       attempts=0
       timeout=true
 
