@@ -1,3 +1,14 @@
+variables:
+  AUTO_REMEDIATE: "false"
+  SKIP_REMEDIATIONS: "false"
+  NETWORK_SCAN: "false"
+  DUMP_SESSIONS_LOG: "false"
+  CHECKOUT: "false"
+  CHECKOUT_SUBMODULES: "false"
+  DISPLAY_LOGS: "true"
+  WHITELIST: "github"
+  WHITELIST_CONFORMANCE: "false"
+
 .setup_edamame_posture:
   before_script:
     - |
@@ -206,17 +217,6 @@
       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
         sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
       fi
-
-  variables:
-    AUTO_REMEDIATE: "false"
-    SKIP_REMEDIATIONS: "false"
-    NETWORK_SCAN: "false"
-    DUMP_SESSIONS_LOG: "false"
-    CHECKOUT: "false"
-    CHECKOUT_SUBMODULES: "false"
-    DISPLAY_LOGS: "true"
-    WHITELIST: "github"
-    WHITELIST_CONFORMANCE: "false"
 
 .setup_edamame_posture_windows:
   stage: setup
