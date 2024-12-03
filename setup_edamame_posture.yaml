@@ -10,10 +10,9 @@ variables:
   WHITELIST_CONFORMANCE: "false"
 
 .setup_edamame_posture:
-  before_script:
+  execute:
     - |
       echo "Determining the Runner's OS and package manager..."
-      echo "Runner tags: $CI_RUNNER_TAGS"
       echo "OS release information:"
       cat /etc/os-release
 
@@ -21,29 +20,19 @@ variables:
       export CI_RUNNER_OS="unknown"
       export PACKAGE_MANAGER="unknown"
 
-      # Determine the Runner's OS
-      if [[ "$CI_RUNNER_TAGS" =~ macos ]]; then
-        CI_RUNNER_OS="macos"
-      elif [[ "$CI_RUNNER_TAGS" =~ windows ]]; then
-        CI_RUNNER_OS="windows"
-      elif [[ "$CI_RUNNER_TAGS" =~ linux ]]; then
+      # Determine the Runner's OS using /etc/os-release
+      if grep -qi "ubuntu" /etc/os-release; then
         CI_RUNNER_OS="linux"
-
-        # Detect the package manager
-        if command -v apt-get >/dev/null; then
-          PACKAGE_MANAGER="apt-get"
-        elif command -v yum >/dev/null; then
-          PACKAGE_MANAGER="yum"
-        elif command -v apk >/dev/null; then
-          PACKAGE_MANAGER="apk"
-        elif command -v dnf >/dev/null; then
-          PACKAGE_MANAGER="dnf"
-        else
-          echo "No supported package manager found."
-          exit 1
-        fi
+        PACKAGE_MANAGER="apt-get"
+      elif grep -qi "alpine" /etc/os-release; then
+        CI_RUNNER_OS="linux"
+        PACKAGE_MANAGER="apk"
+      elif grep -qi "centos\|rhel" /etc/os-release; then
+        CI_RUNNER_OS="linux"
+        PACKAGE_MANAGER="yum"
       else
-        echo "Unable to determine Runner's OS from tags."
+        echo "Unable to determine Runner's OS from /etc/os-release."
+        exit 1
       fi
 
       echo "Detected Runner OS: $CI_RUNNER_OS"
