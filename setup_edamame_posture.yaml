@@ -129,12 +129,6 @@ variables:
     - |
       echo "Starting EDAMAME Posture process and waiting for connection..."
       # Check if all arguments are provided
-      echo "EDAMAME_USER: $EDAMAME_USER"
-      echo "EDAMAME_DOMAIN: $EDAMAME_DOMAIN"
-      echo "EDAMAME_PIN: $EDAMAME_PIN"
-      echo "EDAMAME_ID: $EDAMAME_ID"
-      echo "NETWORK_SCAN: $NETWORK_SCAN"
-      echo "WHITELIST: $WHITELIST"
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
         if [[ -n "$WHITELIST" ]]; then
           sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
@@ -154,43 +148,45 @@ variables:
 
     - |
       echo 'Checkout the repo through the git CLI if requested'
-      cd "$CI_PROJECT_DIR"
-      attempts=0
-      timeout=true
+      if [[ "$CHECKOUT" == "true" ]]; then
+        cd "$CI_PROJECT_DIR"
+        attempts=0
+        timeout=true
 
-      git init || true
-      git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
-      for i in {1..20}; do
-        attempts=$((attempts + 1))
-        echo "Attempt $attempts: Checking out the repo through the Git CLI..."
-        if git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
-          if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
-            timeout=false
-            break
+        git init || true
+        git remote add origin https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+        for i in {1..20}; do
+          attempts=$((attempts + 1))
+          echo "Attempt $attempts: Checking out the repo through the Git CLI..."
+          if git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
+            if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
+              timeout=false
+              break
+            fi
+          else
+            echo "Checkout failed. Waiting for 60 seconds before retrying..."
+            sleep 60
           fi
+        done
+
+        elapsed_time=$((attempts * 60))
+        elapsed_minutes=$((elapsed_time / 60))
+        elapsed_seconds=$((elapsed_time % 60))
+
+        if [ "$timeout" = true ]; then
+          echo "Timeout occurred while attempting to clone the repository."
+          echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+          exit 1
         else
-          echo "Checkout failed. Waiting for 60 seconds before retrying..."
-          sleep 60
-        fi
-      done
-
-      elapsed_time=$((attempts * 60))
-      elapsed_minutes=$((elapsed_time / 60))
-      elapsed_seconds=$((elapsed_time % 60))
-
-      if [ "$timeout" = true ]; then
-        echo "Timeout occurred while attempting to clone the repository."
-        echo "Total time: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        exit 1
-      else
-        echo "Repository cloned successfully."
-        echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
-        echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
-        echo "Checked out commit: $(git rev-parse HEAD)"
-        if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
-          echo "Warning: The checked out commit does not match the expected SHA."
-          echo "Expected: $CI_COMMIT_SHA"
-          echo "Actual: $(git rev-parse HEAD)"
+          echo "Repository cloned successfully."
+          echo "Time taken: ${elapsed_minutes} minutes and ${elapsed_seconds} seconds."
+          echo "Checked out branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Checked out commit: $(git rev-parse HEAD)"
+          if [ "$(git rev-parse HEAD)" != "$CI_COMMIT_SHA" ]; then
+            echo "Warning: The checked out commit does not match the expected SHA."
+            echo "Expected: $CI_COMMIT_SHA"
+            echo "Actual: $(git rev-parse HEAD)"
+          fi
         fi
       fi
 
