@@ -8,6 +8,7 @@ variables:
   DISPLAY_LOGS: "true"
   WHITELIST: "github"
   WHITELIST_CONFORMANCE: "false"
+  WAIT: "false"
 
 .setup_edamame_posture:
   execute:
@@ -69,7 +70,7 @@ variables:
         export PATH="$HOME/bin:$PATH"
 
         echo "Linux environment setup complete."
-      elif [[ "$CI_RUNNER_OS" == "windows" || "$CI_RUNNER_OS" == "macos" ]]; then
+      elif [[ "$CI_RUNNER_OS" == "macos" ]]; then
         echo "No additional setup required for $CI_RUNNER_OS."
       else
         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
@@ -77,6 +78,8 @@ variables:
       fi
     - |
       cd
+      export BINARY_PRESENT=false
+
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
@@ -90,17 +93,16 @@ variables:
               wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
             fi
             chmod +x edamame_posture
+          else 
+            BINARY_PRESENT=true
           fi
           ;;
         "macos")
           if [[ ! -f edamame_posture ]]; then
             wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
             chmod +x edamame_posture
-          fi
-          ;;
-        "windows")
-          if [[ ! -f edamame_posture.exe ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
+          else
+            BINARY_PRESENT=true
           fi
           ;;
         *)
@@ -111,13 +113,14 @@ variables:
 
     - |
       echo "Showing initial posture..."
+      cd
       sudo ./edamame_posture score
 
     - |
       cd
       echo "Auto-remediating posture issues if requested..."
       if [[ "$AUTO_REMEDIATE" == "true" ]]; then
-        if [[ -z "$SKIP_REMEDIATIONS" ]]; then
+        if [[ "$SKIP_REMEDIATIONS" == "" ]]; then
           echo "No remediations to skip."
           sudo ./edamame_posture remediate
         else
@@ -125,19 +128,72 @@ variables:
           sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
         fi
       fi
-    #TODO ADD SLEEP IF REQUESTED
+
+    - |
+      if [[ "$WAIT" == "true" ]]; then
+        sleep 180
+      fi
+
     - |
       echo "Starting EDAMAME Posture process and waiting for connection..."
+      cd
       # Check if all arguments are provided
       if [[ -n "$EDAMAME_USER" && -n "$EDAMAME_DOMAIN" && -n "$EDAMAME_PIN" && -n "$EDAMAME_ID" ]]; then
-        if [[ -n "$WHITELIST" ]]; then
-          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
-        else
-          sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+        if [[ "$BINARY_PRESENT" == "true" ]]; then
+          # Function to compare strings case-insensitively
+          case_insensitive_compare() {
+            [[ "${1,,}" == "${2,,}" ]]
+          }
+          echo "EDAMAME Posture binary is already present. Checking status..."
+          sudo ./edamame_posture status > posture_status.txt
+          # Check if the output indicates Error getting connection status: transport error
+          if grep -q "Error getting connection status: transport error" posture_status.txt; then
+            echo "No background process is running. Proceeding to start the process."
+          else
+            # Extract User and Domain from the status
+            current_user=$(grep -i 'user:' posture_status.txt | awk -F': ' '{print $2}')
+            current_domain=$(grep -i 'domain:' posture_status.txt | awk -F': ' '{print $2}')
+            connected=$(grep -i 'connected:' posture_status.txt | awk -F': ' '{print $2}')
+
+            echo "Current User: $current_user"
+            echo "Current Domain: $current_domain"
+            echo "Connected: $connected"
+
+            # Compare with inputs
+            if [[ "$connected" == "true" ]] && case_insensitive_compare "$current_user" "${{ inputs.edamame_user }}" && case_insensitive_compare "$current_domain" "${{ inputs.edamame_domain }}"; then
+              echo "EDAMAME Posture is already running with the specified user and domain. Skipping start process."
+              # Exit the step successfully to proceed to the next step
+              exit 0
+            else
+              echo "EDAMAME Posture is not running with the specified user/domain or not connected."
+              sudo ./edamame_posture stop
+              sleep 5
+              echo "Stopped the existing EDAMAME Posture process."
+            fi
+          fi
         fi
-        echo "Waiting for connection..."
-        sudo ./edamame_posture wait-for-connection
-        sleep 80
+        if [[ "$CI_RUNNER_OS" == "linux" ]]; then
+          if [[ -n "$WHITELIST" ]]; then
+            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
+          else
+            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+          fi
+          echo "Waiting for connection..."
+          sudo ./edamame_posture wait-for-connection
+          sleep 80
+        fi
+        else 
+          if [[ "$CI_RUNNER_OS" == "macos" ]]; then
+            if [[ -n "$WHITELIST" ]]; then
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
+            else
+              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+            fi
+            echo "Waiting for connection..."
+            sudo ./edamame_posture wait-for-connection
+            sleep 80
+          fi
+        fi
       else
         # Check if only a partial set of mandatory arguments is provided
         if [[ -n "$EDAMAME_USER$EDAMAME_DOMAIN$EDAMAME_PIN$EDAMAME_ID" ]]; then
@@ -160,6 +216,9 @@ variables:
           echo "Attempt $attempts: Checking out the repo through the Git CLI..."
           if git fetch --depth=1 origin "$CI_COMMIT_REF_NAME"; then
             if git checkout -b "$CI_COMMIT_REF_NAME" FETCH_HEAD; then
+              if [[ "$CHECKOUT_SUBMODULES" == "true" ]]; then
+                git submodule update --init --recursive
+              fi
               timeout=false
               break
             fi
