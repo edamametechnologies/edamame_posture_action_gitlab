@@ -181,7 +181,6 @@ variables:
           echo "Waiting for connection..."
           sudo ./edamame_posture wait-for-connection
           sleep 80
-        fi
         else 
           if [[ "$CI_RUNNER_OS" == "macos" ]]; then
             if [[ -n "$WHITELIST" ]]; then
