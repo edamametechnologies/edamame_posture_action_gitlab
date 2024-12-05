@@ -42,7 +42,6 @@ variables:
     - |
       if [[ "$CI_RUNNER_OS" == "linux" ]]; then
         echo "Setting up environment for Linux..."
-
         # Install necessary packages based on the package manager
         if [[ "$PACKAGE_MANAGER" == "apt-get" ]]; then
           echo "Using apt-get"
@@ -76,6 +75,7 @@ variables:
         echo "Unsupported OS: $CI_RUNNER_OS. Exiting..."
         exit 1
       fi
+
     - |
       cd
       export BINARY_PRESENT=false
@@ -85,13 +85,40 @@ variables:
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture ]]; then
-            # If package manager is apk that's mean we are using alpine
-            if [[ "$PACKAGE_MANAGER" == "apk" ]]; then
-              echo "Using Alpine Linux"
-              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
+            # Linux logic
+            ARCH=$(uname -m)
+            if [[ -f /etc/os-release ]]; then
+              source /etc/os-release
             else
-              wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+              echo "/etc/os-release not found. Cannot determine distribution."
+              exit 1
             fi
+            case "$ID" in
+              "amzn")
+                # Amazon Linux
+                if [[ "$ARCH" == "x86_64" ]]; then
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon/latest/edamame_posture
+                else
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon_arm/latest/edamame_posture
+                fi
+                ;;
+              "alpine")
+                # Alpine Linux
+                if [[ "$ARCH" == "x86_64" ]]; then
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
+                else
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine_arm/latest/edamame_posture
+                fi
+                ;;
+              *)
+                # Everything else (Ubuntu, Debian, or any unknown distro)
+                if [[ "$ARCH" == "x86_64" ]]; then
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+                else
+                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_arm/latest/edamame_posture
+                fi
+                ;;
+            esac
             chmod +x edamame_posture
           else 
             BINARY_PRESENT=true
