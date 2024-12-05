@@ -79,7 +79,6 @@ variables:
     - |
       cd
       export BINARY_PRESENT=false
-
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
@@ -97,24 +96,30 @@ variables:
               "amzn")
                 # Amazon Linux
                 if [[ "$ARCH" == "x86_64" ]]; then
+                  echo "Downloading Amazon Linux binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon/latest/edamame_posture
                 else
+                  echo "Downloading Amazon Linux ARM binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon_arm/latest/edamame_posture
                 fi
                 ;;
               "alpine")
                 # Alpine Linux
                 if [[ "$ARCH" == "x86_64" ]]; then
+                  echo "Downloading Alpine Linux binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
                 else
+                  echo "Downloading Alpine Linux ARM binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine_arm/latest/edamame_posture
                 fi
                 ;;
               *)
                 # Everything else (Ubuntu, Debian, or any unknown distro)
                 if [[ "$ARCH" == "x86_64" ]]; then
+                  echo "Downloading Ubuntu/Debian binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
                 else
+                  echo "Downloading Ubuntu/Debian ARM binary..."
                   wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_arm/latest/edamame_posture
                 fi
                 ;;
