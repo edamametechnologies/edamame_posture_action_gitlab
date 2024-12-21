@@ -93,36 +93,40 @@ variables:
               exit 1
             fi
             case "$ID" in
-              "amzn")
-                # Amazon Linux
-                if [[ "$ARCH" == "x86_64" ]]; then
-                  echo "Downloading Amazon Linux binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon/latest/edamame_posture
-                else
-                  echo "Downloading Amazon Linux ARM binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_amazon_arm/latest/edamame_posture
-                fi
-                ;;
               "alpine")
                 # Alpine Linux
                 if [[ "$ARCH" == "x86_64" ]]; then
                   echo "Downloading Alpine Linux binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine/latest/edamame_posture
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-x86_64-unknown-linux-gnu
+                  mv edamame_posture-0.8.0-x86_64-unknown-linux-musl edamame_posture
                 else
                   echo "Downloading Alpine Linux ARM binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_alpine_arm/latest/edamame_posture
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-aarch64-unknown-linux-gnu
+                  mv edamame_posture-0.8.0-aarch64-unknown-linux-musl edamame_posture
                 fi
                 ;;
               *)
-                # Everything else (Ubuntu, Debian, or any unknown distro)
+                # Everything else (Amazon, Ubuntu, Debian, or any unknown distro)
                 if [[ "$ARCH" == "x86_64" ]]; then
-                  echo "Downloading Ubuntu/Debian binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux/latest/edamame_posture
+                  echo "Downloading Gnu Linux binary..."
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-x86_64-unknown-linux-gnu
+                  mv edamame_posture-0.8.0-x86_64-unknown-linux-gnu edamame_posture
+                elif [[ "$ARCH" == "i686" ]]; then
+                  echo "Downloading Gnu Linux i686 binary..."
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-i686-unknown-linux-gnu
+                  mv edamame_posture-0.8.0-i686-unknown-linux-gnu edamame_posture
+                elif [[ "$ARCH" == "aarch64" ]]; then
+                  echo "Downloading Gnu Linux ARM binary..."
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-aarch64-unknown-linux-gnu
+                  mv edamame_posture-0.8.0-aarch64-unknown-linux-gnu edamame_posture
+                elif [[ "$ARCH" == "armhf" ]]; then
+                  echo "Downloading Gnu Linux ARM binary..."
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-armv7-unknown-linux-gnueabihf
+                  mv edamame_posture-0.8.0-armv7-unknown-linux-gnueabihf edamame_posture
                 else
-                  echo "Downloading Ubuntu/Debian ARM binary..."
-                  wget https://edamame-posture.s3.eu-west-1.amazonaws.com/linux_arm/latest/edamame_posture
+                  echo "Unsupported architecture: $ARCH"
+                  exit 1
                 fi
-                ;;
             esac
             chmod +x edamame_posture
           else 
@@ -131,7 +135,8 @@ variables:
           ;;
         "macos")
           if [[ ! -f edamame_posture ]]; then
-            wget https://edamame-posture.s3.eu-west-1.amazonaws.com/macos/latest/edamame_posture
+            wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-universal-apple-darwin
+            mv edamame_posture-0.8.0-universal-apple-darwin edamame_posture
             chmod +x edamame_posture
           else
             BINARY_PRESENT=true
@@ -343,13 +348,14 @@ variables:
       $env:PATH = "C:\Program Files\Git\cmd;C:\Program Files\Git\usr\bin;" + $env:PATH
       git --version
 
-    # Step 3: Create a Bash script with all your commands
+    # Step 3: Execute the Bash script using Git Bash
     - |
       $bashScriptContent = @'
       #!/bin/bash
       set -e  # Exit immediately if a command exits with a non-zero status
 
-      wget https://edamame-posture.s3.eu-west-1.amazonaws.com/windows/latest/edamame_posture.exe
+      wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-x86_64-pc-windows-msvc.exe
+      mv edamame_posture-0.8.0-x86_64-pc-windows-msvc.exe edamame_posture.exe
       # Show initial posture
       echo "Showing initial posture..."
       ./edamame_posture.exe score
