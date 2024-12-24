@@ -97,12 +97,12 @@ variables:
                 # Alpine Linux
                 if [[ "$ARCH" == "x86_64" ]]; then
                   echo "Downloading Alpine Linux binary..."
-                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-x86_64-unknown-linux-gnu
-                  mv edamame_posture-0.8.0-x86_64-unknown-linux-gnu edamame_posture
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-x86_64-unknown-linux-musl
+                  mv edamame_posture-0.8.0-x86_64-unknown-linux-musl edamame_posture
                 else
                   echo "Downloading Alpine Linux ARM binary..."
-                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-aarch64-unknown-linux-gnu
-                  mv edamame_posture-0.8.0-aarch64-unknown-linux-gnu edamame_posture
+                  wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-aarch64-unknown-linux-musl
+                  mv edamame_posture-0.8.0-aarch64-unknown-linux-musl edamame_posture
                 fi
                 ;;
               *)
