@@ -150,10 +150,12 @@ variables:
 
     - |
       if command -v edamame_posture >/dev/null 2>&1; then
-        echo "EDAMAME_POSTURE=edamame_posture" >> $GITHUB_ENV
+        export EDAMAME_POSTURE=edamame_posture
       else
-        echo "EDAMAME_POSTURE=./edamame_posture" >> $GITHUB_ENV
+        export EDAMAME_POSTURE=./edamame_posture
       fi
+
+    - echo "EDAMAME_POSTURE is set to $EDAMAME_POSTURE"
 
     - |
       echo "Showing initial posture..."
