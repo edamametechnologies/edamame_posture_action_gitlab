@@ -83,7 +83,7 @@ variables:
       echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
         "linux")
-          if [[ ! -f edamame_posture ]]; then
+          if [[ ! -f edamame_posture || ! -f /usr/bin/edamame_posture ]]; then
             # Linux logic
             ARCH=$(uname -m)
             if [[ -f /etc/os-release ]]; then
@@ -134,7 +134,7 @@ variables:
           fi
           ;;
         "macos")
-          if [[ ! -f edamame_posture ]]; then
+          if [[ ! -f edamame_posture || ! -f /usr/bin/edamame_posture ]]; then
             wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v0.8.0/edamame_posture-0.8.0-universal-apple-darwin
             mv edamame_posture-0.8.0-universal-apple-darwin edamame_posture
             chmod +x edamame_posture
@@ -149,9 +149,16 @@ variables:
       esac
 
     - |
+      if command -v edamame_posture >/dev/null 2>&1; then
+        echo "EDAMAME_POSTURE=edamame_posture" >> $GITHUB_ENV
+      else
+        echo "EDAMAME_POSTURE=./edamame_posture" >> $GITHUB_ENV
+      fi
+
+    - |
       echo "Showing initial posture..."
       cd
-      sudo ./edamame_posture score
+      sudo $EDAMAME_POSTURE score
 
     - |
       cd
