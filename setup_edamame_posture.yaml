@@ -62,11 +62,16 @@ variables:
         fi
 
         # Create a custom sudo script and update PATH
-        mkdir -p ~/bin
-        echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
-        chmod +x ~/bin/sudo
-        echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
-        export PATH="$HOME/bin:$PATH"
+        if ! command -v sudo >/dev/null 2>&1; then
+          echo "sudo not found; creating a dummy sudo command..."
+          mkdir -p ~/bin
+          echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+          chmod +x ~/bin/sudo
+          echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+          echo 'export PATH="$HOME/bin:$PATH"' >> ~/.profile
+          export PATH="$HOME/bin:$PATH"
+        fi
+
 
         echo "Linux environment setup complete."
       elif [[ "$CI_RUNNER_OS" == "macos" ]]; then
@@ -160,8 +165,7 @@ variables:
     - |
       echo "Showing initial posture..."
       cd
-      # sudo edamame_posture score
-      $EDAMAME_POSTURE score
+      sudo $EDAMAME_POSTURE score
 
     - |
       cd
