@@ -61,6 +61,18 @@ variables:
           exit 1
         fi
 
+        if ! command -v sudo &>/dev/null; then
+          echo "sudo not found; setting up custom sudo script."
+          # Create a custom sudo script and update PATH
+          mkdir -p ~/bin
+          echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
+          chmod +x ~/bin/sudo
+          export PATH="$HOME/bin:$PATH"
+        else
+          echo "sudo found; using system sudo."
+          export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        fi
+
 
         echo "Linux environment setup complete."
       elif [[ "$CI_RUNNER_OS" == "macos" ]]; then
