@@ -70,7 +70,7 @@ variables:
           export PATH="$HOME/bin:$PATH"
         else
           echo "sudo found; using system sudo."
-          export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          export PATH="/usr/bin:$PATH"
         fi
 
 
