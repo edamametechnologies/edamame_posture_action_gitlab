@@ -171,13 +171,13 @@ variables:
     - |
       cd
       echo "Auto-remediating posture issues if requested..."
-      if [[ "$AUTO_REMEDIATE" == "true" ]]; then
+      if [[ "$AUTO_REMEDIATE" == "true" && "$BINARY_PRESENT" == "true"]]; then
         if [[ "$SKIP_REMEDIATIONS" == "" ]]; then
           echo "No remediations to skip."
-          sudo ./edamame_posture remediate
+          sudo $EDAMAME_POSTURE remediate
         else
           echo "Skipping remediations: $SKIP_REMEDIATIONS"
-          sudo ./edamame_posture remediate "$SKIP_REMEDIATIONS"
+          sudo $EDAMAME_POSTURE remediate "$SKIP_REMEDIATIONS"
         fi
       fi
 
@@ -197,51 +197,46 @@ variables:
             [[ "${1,,}" == "${2,,}" ]]
           }
           echo "EDAMAME Posture binary is already present. Checking status..."
-          sudo ./edamame_posture status > posture_status.txt
+          sudo $EDAMAME_POSTURE status > posture_status.txt
           # Check if the output indicates Error getting connection status: transport error
           if grep -q "Error getting connection status: transport error" posture_status.txt; then
-            echo "No background process is running. Proceeding to start the process."
+            echo "edamame_posture service is installed but isn't connected, please configure it properly in order to use this runner"
+            exit 1
           else
             # Extract User and Domain from the status
-            current_user=$(grep -i 'User:' posture_status.txt | awk -F': ' '{print $2}')
-            current_domain=$(grep -i 'Domain:' posture_status.txt | awk -F': ' '{print $2}')
             connected=$(grep -i 'Connected:' posture_status.txt | awk -F': ' '{print $2}')
 
-            echo "Current User: $current_user"
-            echo "Current Domain: $current_domain"
             echo "Connected: $connected"
 
             # Compare with inputs
-            if [[ "$connected" == "true" ]] && case_insensitive_compare "$current_user" "$EDAMAME_USER" && case_insensitive_compare "$current_domain" "$EDAMAME_DOMAIN"; then
+            if [[ "$connected" == "true" ]]; then
               echo "EDAMAME Posture is already running with the specified user and domain. Skipping start process."
               # Exit the step successfully to proceed to the next step
               exit 0
             else
-              echo "EDAMAME Posture is not running with the specified user/domain or not connected."
-              sudo ./edamame_posture stop
-              sleep 5
-              echo "Stopped the existing EDAMAME Posture process."
+              echo "edamame_posture service is installed but isn't connected, please configure it properly in order to use this runner"
+              exit 1
             fi
           fi
         fi
         if [[ "$CI_RUNNER_OS" == "linux" ]]; then
           if [[ -n "$WHITELIST" ]]; then
-            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
+            sudo $EDAMAME_POSTURE start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_ubuntu"
           else
-            sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+            sudo $EDAMAME_POSTURE start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
           fi
           echo "Waiting for connection..."
-          sudo ./edamame_posture wait-for-connection
+          sudo $EDAMAME_POSTURE wait-for-connection
           sleep 80
         else 
           if [[ "$CI_RUNNER_OS" == "macos" ]]; then
             if [[ -n "$WHITELIST" ]]; then
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
+              sudo $EDAMAME_POSTURE start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN" "${WHITELIST}_macos"
             else
-              sudo ./edamame_posture start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
+              sudo $EDAMAME_POSTURE start "$EDAMAME_USER" "$EDAMAME_DOMAIN" "$EDAMAME_PIN" "$EDAMAME_ID" "$NETWORK_SCAN"
             fi
             echo "Waiting for connection..."
-            sudo ./edamame_posture wait-for-connection
+            sudo $EDAMAME_POSTURE wait-for-connection
             sleep 80
           fi
         fi
@@ -304,14 +299,14 @@ variables:
       cd
       echo "Checking if display_logs is enabled..."
       if [[ "$DISPLAY_LOGS" == "true" ]]; then
-        sudo ./edamame_posture logs
+        sudo $EDAMAME_POSTURE logs
       fi
 
     - |
       cd
       echo "Checking if dump_sessions_log is enabled..."
       if [[ "$DUMP_SESSIONS_LOG" == "true" ]]; then
-        sudo ./edamame_posture get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
+        sudo $EDAMAME_POSTURE get-sessions || if [[ "$WHITELIST_CONFORMANCE" == "true" ]]; then exit 1; fi
       fi
 
 .setup_edamame_posture_windows:
