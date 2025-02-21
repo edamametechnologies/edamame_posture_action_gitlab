@@ -89,7 +89,7 @@ variables:
       echo "OS: $CI_RUNNER_OS"
       case "$CI_RUNNER_OS" in
         "linux")
-          if [[ ! -f edamame_posture || ! -f /usr/bin/edamame_posture ]]; then
+          if [[ ! -f edamame_posture && ! -f /usr/bin/edamame_posture ]]; then
             # Linux logic
             ARCH=$(uname -m)
             if [[ -f /etc/os-release ]]; then
