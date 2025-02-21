@@ -171,7 +171,7 @@ variables:
     - |
       cd
       echo "Auto-remediating posture issues if requested..."
-      if [[ "$AUTO_REMEDIATE" == "true" && "$BINARY_PRESENT" == "true"]]; then
+      if [[ "$AUTO_REMEDIATE" == "true" && "$BINARY_PRESENT" == "true" ]]; then
         if [[ "$SKIP_REMEDIATIONS" == "" ]]; then
           echo "No remediations to skip."
           sudo $EDAMAME_POSTURE remediate
