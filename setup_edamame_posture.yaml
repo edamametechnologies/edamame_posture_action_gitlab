@@ -68,10 +68,10 @@ variables:
           echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
           chmod +x ~/bin/sudo
           export PATH="$HOME/bin:$PATH"
-        else
-          echo "sudo found; using system sudo."
-          export PATH="/usr/bin:$PATH"
         fi
+        # else
+        #   echo "sudo found; using system sudo."
+        #   export PATH="/usr/bin:$PATH"
 
 
         echo "Linux environment setup complete."
