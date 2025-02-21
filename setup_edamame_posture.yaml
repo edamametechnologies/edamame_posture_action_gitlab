@@ -154,7 +154,7 @@ variables:
     - |
       echo "Showing initial posture..."
       cd
-      sudo -E $EDAMAME_POSTURE score
+      sudo $EDAMAME_POSTURE score
 
     - |
       cd
