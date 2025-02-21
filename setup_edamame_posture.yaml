@@ -212,7 +212,7 @@ variables:
             echo "Connected: $connected"
 
             # Compare with inputs
-            if [[ "$connected" == "true" ]] && case_insensitive_compare "$current_user" "${{ inputs.edamame_user }}" && case_insensitive_compare "$current_domain" "${{ inputs.edamame_domain }}"; then
+            if [[ "$connected" == "true" ]] && case_insensitive_compare "$current_user" "$EDAMAME_USER" && case_insensitive_compare "$current_domain" "$EDAMAME_DOMAIN"; then
               echo "EDAMAME Posture is already running with the specified user and domain. Skipping start process."
               # Exit the step successfully to proceed to the next step
               exit 0
