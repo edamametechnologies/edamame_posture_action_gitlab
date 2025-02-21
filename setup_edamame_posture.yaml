@@ -61,12 +61,6 @@ variables:
           exit 1
         fi
 
-        # # Create a custom sudo script and update PATH
-        # mkdir -p ~/bin
-        # echo -e '#!/bin/bash\n"$@"' > ~/bin/sudo
-        # chmod +x ~/bin/sudo
-        # echo 'export PATH="$HOME/bin:$PATH"' | tee -a ~/.bashrc ~/.profile >/dev/null
-        # export PATH="$HOME/bin:$PATH"
 
         echo "Linux environment setup complete."
       elif [[ "$CI_RUNNER_OS" == "macos" ]]; then
