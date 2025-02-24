@@ -136,6 +136,7 @@ variables:
       export BINARY_PRESENT=false
       echo "Downloading EDAMAME Posture binary based on OS..."
       echo "OS: $CI_RUNNER_OS"
+      echo "Version: $EDAMAME_VERSION"
       case "$CI_RUNNER_OS" in
         "linux")
           if [[ ! -f edamame_posture && ! -f /usr/bin/edamame_posture ]]; then
