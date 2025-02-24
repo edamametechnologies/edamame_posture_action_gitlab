@@ -25,15 +25,15 @@ variables:
           WAIT_TIME=$((WAIT_TIME * 2))
           if [[ $WAIT_TIME -gt 120 ]]; then
             echo "API rate limit not resolved in time. Using default: $DEFAULT_VERSION"
-            VERSION=${DEFAULT_VERSION#v}
+            EDAMAME_VERSION=${DEFAULT_VERSION#v}
             break
           fi
           echo "API rate limit exceeded, sleeping for $WAIT_TIME seconds..."
           sleep $WAIT_TIME
         else
-          VERSION=$(echo "$LATEST_RESPONSE" | jq -r '.tag_name')
-          VERSION=${VERSION#v}
-          echo "Discovered latest version: $VERSION"
+          EDAMAME_VERSION=$(echo "$LATEST_RESPONSE" | jq -r '.tag_name')
+          EDAMAME_VERSION=${EDAMAME_VERSION#v}
+          echo "Discovered latest version: $EDAMAME_VERSION"
           break
         fi
       done
@@ -61,7 +61,7 @@ variables:
       done
 
     - |
-      echo "Now downloading EDAMAME Posture version: $VERSION, fallback: $FALLBACK_VERSION"
+      echo "Now downloading EDAMAME Posture version: $EDAMAME_VERSION, fallback: $FALLBACK_VERSION"
       echo "Determining the Runner's OS and package manager..."
       echo "OS release information:"
       cat /etc/os-release
@@ -153,11 +153,11 @@ variables:
                 if [[ "$ARCH" == "x86_64" ]]; then
                   echo "Downloading Alpine Linux binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-x86_64-unknown-linux-musl
-                  mv edamame_posture-${VERSION}-x86_64-unknown-linux-musl edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-x86_64-unknown-linux-musl edamame_posture
                 else
                   echo "Downloading Alpine Linux ARM binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-aarch64-unknown-linux-musl
-                  mv edamame_posture-${VERSION}-aarch64-unknown-linux-musl edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-aarch64-unknown-linux-musl edamame_posture
                 fi
                 ;;
               *)
@@ -165,19 +165,19 @@ variables:
                 if [[ "$ARCH" == "x86_64" ]]; then
                   echo "Downloading Gnu Linux binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-x86_64-unknown-linux-gnu
-                  mv edamame_posture-${VERSION}-x86_64-unknown-linux-gnu edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-x86_64-unknown-linux-gnu edamame_posture
                 elif [[ "$ARCH" == "i686" ]]; then
                   echo "Downloading Gnu Linux i686 binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-i686-unknown-linux-gnu
-                  mv edamame_posture-${VERSION}-i686-unknown-linux-gnu edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-i686-unknown-linux-gnu edamame_posture
                 elif [[ "$ARCH" == "aarch64" ]]; then
                   echo "Downloading Gnu Linux ARM binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-aarch64-unknown-linux-gnu
-                  mv edamame_posture-${VERSION}-aarch64-unknown-linux-gnu edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-aarch64-unknown-linux-gnu edamame_posture
                 elif [[ "$ARCH" == "armhf" ]]; then
                   echo "Downloading Gnu Linux ARM binary..."
                   wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-armv7-unknown-linux-gnueabihf
-                  mv edamame_posture-${VERSION}-armv7-unknown-linux-gnueabihf edamame_posture
+                  mv edamame_posture-${EDAMAME_VERSION}-armv7-unknown-linux-gnueabihf edamame_posture
                 else
                   echo "Unsupported architecture: $ARCH"
                   exit 1
@@ -191,7 +191,7 @@ variables:
         "macos")
           if [[ ! -f edamame_posture || ! -f /usr/bin/edamame_posture ]]; then
             wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-universal-apple-darwin
-            mv edamame_posture-${VERSION}-universal-apple-darwin edamame_posture
+            mv edamame_posture-${EDAMAME_VERSION}-universal-apple-darwin edamame_posture
             chmod +x edamame_posture
           else
             BINARY_PRESENT=true
@@ -438,8 +438,8 @@ variables:
       #!/bin/bash
       set -e  # Exit immediately if a command exits with a non-zero status
 
-      wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${VERSION}/edamame_posture-${VERSION}-x86_64-pc-windows-msvc.exe
-      mv edamame_posture-${VERSION}-x86_64-pc-windows-msvc.exe edamame_posture.exe
+      wget https://github.com/edamametechnologies/edamame_posture_cli/releases/download/v${EDAMAME_VERSION}/edamame_posture-${EDAMAME_VERSION}-x86_64-pc-windows-msvc.exe
+      mv edamame_posture-${EDAMAME_VERSION}-x86_64-pc-windows-msvc.exe edamame_posture.exe
       # Show initial posture
       echo "Showing initial posture..."
       ./edamame_posture.exe score
