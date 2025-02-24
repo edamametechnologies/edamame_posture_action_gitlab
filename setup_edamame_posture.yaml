@@ -17,6 +17,8 @@ variables:
     - |
       echo "Attempting to determine the latest EDAMAME Posture release..."
       WAIT_TIME=5
+      # install curl 
+      apt-get update && apt-get install -y curl jq
       while true; do
         LATEST_RESPONSE=$(curl -s https://api.github.com/repos/edamametechnologies/edamame_posture_cli/releases/latest)
         if [[ $(echo "$LATEST_RESPONSE" | grep -i "API rate limit exceeded") ]]; then
