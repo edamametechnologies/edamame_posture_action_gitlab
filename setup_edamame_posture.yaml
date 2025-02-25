@@ -385,8 +385,7 @@ variables:
       fi
 
 .setup_edamame_posture_windows:
-  stage: setup
-  before_script:
+  execute:
     # Step 1: Check for bash.exe (Git Bash) and Install Git if Not Found
     - |
       # Try to find bash.exe using Get-Command
